@@ -1,0 +1,6 @@
+{
+  "name": "Kisan Mitra",
+  "description": "Connecting Farmers, Buyers and Markets with real-time market intelligence, MSP data, crop listings, buyer requirements, matching engine, negotiation orders, real-time chat, price alerts, and multilingual AI assistant.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
