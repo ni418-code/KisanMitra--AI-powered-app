@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../services/api.ts';
 import { Product, BuyerRequest, MatchResult } from '../types/index.ts';
+import { getLocalizedCropName } from '../services/translations.ts';
 import {
   TrendingUp,
   Boxes,
@@ -28,7 +29,7 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
   openPostRequirementModal,
   openChatModal,
 }) => {
-  const { user, t } = useAuth();
+  const { user, language, t } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [buyerRequests, setBuyerRequests] = useState<BuyerRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,7 +185,7 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
                 />
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-black text-slate-900">{prod.cropName}</span>
+                    <span className="text-xs font-black text-slate-900">{getLocalizedCropName(prod.cropName, language)}</span>
                     <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
                       ₹{prod.expectedPrice}/{prod.unit}
                     </span>

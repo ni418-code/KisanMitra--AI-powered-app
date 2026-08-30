@@ -150,11 +150,18 @@ export class OfferController {
       storageCost,
       totalAmount,
       deliveryLocation: buyerUser?.location || { state: 'Telangana', district: 'Hyderabad', market: 'Bowenpally' },
-      paymentStatus: 'escrow_held',
+      paymentStatus: 'pending',
       paymentMethod: 'Escrow Simulation (UPI / Bank Transfer)',
       shippingStatus: 'accepted',
       orderStatus: 'accepted',
-      trackingNotes: 'Offer accepted. Order created and funds deposited into Kisan Mitra Escrow.',
+      trackingNotes: 'Offer accepted. Buyer must deposit funds into KisanMitra Escrow to begin protected delivery.',
+      escrowStep: 'awaiting_deposit',
+      escrowStatus: '⏳ Awaiting Buyer Deposit',
+      deliveryMarked: false,
+      qualityVerified: false,
+      escrowHistory: [
+        { label: 'Offer accepted and order created', at: new Date().toISOString() },
+      ],
       estimatedDeliveryDate: new Date(Date.now() + 4 * 24 * 3600 * 1000).toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
     };
@@ -213,6 +220,52 @@ export class OfferController {
         order: savedOrder,
         conversationId: conv.id,
       },
+    });
+  }
+
+  /**
+   * Delete / cancel an offer (initiator can delete pending or their own declined offers)
+   */
+  static async deleteOffer(req: AuthenticatedRequest, res: Response): Promise<void> {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    const offer = dataStore.offers.find((o) => o.id === req.params.id);
+    if (!offer) {
+      res.status(404).json({ success: false, message: 'Offer not found.' });
+      return;
+    }
+
+    if (offer.buyerId !== req.user.id && offer.farmerId !== req.user.id && req.user.role !== 'admin') {
+      res.status(403).json({ success: false, message: 'Not authorized to delete this offer.' });
+      return;
+    }
+
+    if (offer.status === 'accepted') {
+      res.status(400).json({ success: false, message: 'Accepted offers are converted into orders and cannot be deleted. Manage it in Orders.' });
+      return;
+    }
+
+    dataStore.offers = dataStore.offers.filter((o) => o.id !== offer.id);
+
+    const otherUserId = offer.buyerId === req.user.id ? offer.farmerId : offer.buyerId;
+    dataStore.addNotification({
+      id: `notif-${Date.now()}`,
+      userId: otherUserId,
+      title: `Offer Removed for ${offer.cropName}`,
+      message: `${req.user.name} removed the offer of ₹${offer.proposedPrice}/${offer.unit}.`,
+      type: 'offer',
+      referenceId: offer.id,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+
+    res.json({
+      success: true,
+      message: 'Offer deleted successfully.',
+      data: { id: offer.id },
     });
   }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../services/api.ts';
 import { Product, BuyerRequest, MarketPrice, MatchResult } from '../types/index.ts';
+import { getLocalizedCropName } from '../services/translations.ts';
 import {
   TrendingUp,
   Package,
@@ -30,7 +31,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   openAddProduceModal,
   openCropDetailModal,
 }) => {
-  const { user, t } = useAuth();
+  const { user, language, t } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([]);
   const [buyerRequests, setBuyerRequests] = useState<BuyerRequest[]>([]);
@@ -175,6 +176,42 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
 
       </div>
 
+      {/* Exact Backend Lot Images & Prices */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-base font-extrabold text-slate-900 font-serif">Your Listed Produce Lots 👇 Exact Backend Images & Prices</h2>
+            <p className="text-xs text-slate-500">All images and ₹ prices come from your created lots stored on the KisanMitra backend.</p>
+          </div>
+          <button onClick={() => setCurrentTab('myProduce')} className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center space-x-1">
+            <span>Manage Lots</span><ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {products.slice(0, 6).map((prod) => (
+            <div key={prod.id} className="bg-slate-50 rounded-xl overflow-hidden border border-slate-200 hover:border-emerald-300 transition">
+              <img src={prod.images[0] || 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=80'} alt={prod.cropName} className="w-full h-32 object-cover" />
+              <div className="p-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-slate-900 text-sm">{getLocalizedCropName(prod.cropName, language)}</span>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 text-[10px] font-black rounded-full uppercase">{prod.status}</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">{(prod.quantity || 0).toLocaleString('en-IN')} {prod.unit} • {prod.variety || 'Standard'}</p>
+                <div className="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400">Exact backend price</span>
+                  <span className="text-sm font-black text-emerald-800">₹{prod.expectedPrice}/{prod.unit}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {products.length === 0 && (
+            <div className="col-span-full text-center py-6 text-xs text-slate-500">
+              No lots created yet. Click “+ Create Lot” to add produce and see its exact image and price here.
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* AI Net Return & Recommendation Module (Rule 20) */}
       <div className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
@@ -244,7 +281,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                 {marketPrices.slice(0, 5).map((price) => (
                   <tr key={price.id} className="hover:bg-slate-50/80 transition">
                     <td className="py-3 px-3 font-bold text-slate-900">
-                      {price.cropName}
+                      {getLocalizedCropName(price.cropName, language)}
                       <span className="block text-[10px] font-normal text-slate-400">{price.variety || 'Standard'}</span>
                     </td>
                     <td className="py-3 px-3 text-slate-600">
@@ -298,7 +335,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                 <div key={req.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 hover:border-emerald-300 transition">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="font-extrabold text-slate-900 text-xs">{req.cropName}</span>
+                      <span className="font-extrabold text-slate-900 text-xs">{getLocalizedCropName(req.cropName, language)}</span>
                       <p className="text-[11px] text-slate-500">{req.quantity} {req.unit} needed</p>
                     </div>
                     <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">

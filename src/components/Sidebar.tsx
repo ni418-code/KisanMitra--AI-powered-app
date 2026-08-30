@@ -17,6 +17,7 @@ import {
   BellRing,
   Bot,
   AlertOctagon,
+  ShieldAlert,
   User as UserIcon,
   LogOut,
   Wheat,
@@ -24,6 +25,7 @@ import {
   ChevronRight,
   Sparkles,
   Globe,
+  CircleDollarSign,
 } from 'lucide-react';
 
 export type AppView =
@@ -36,12 +38,14 @@ export type AppView =
   | 'deals'
   | 'offers'
   | 'orders'
+  | 'escrow'
   | 'logistics_storage'
   | 'profit_calculator'
   | 'chat'
   | 'alerts'
   | 'disputes'
   | 'ai_assistant'
+  | 'admin_panel'
   | 'profile';
 
 interface SidebarProps {
@@ -70,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'dashboard' as AppView,
       label: t.dashboard,
       icon: LayoutDashboard,
-      roles: ['farmer', 'buyer'],
+      roles: ['farmer', 'buyer', 'admin'],
     },
     {
       id: 'market_prices' as AppView,
@@ -83,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'msp_table' as AppView,
       label: t.mspTable,
       icon: Scale,
-      roles: ['farmer', 'buyer'],
+      roles: ['farmer'],
     },
     {
       id: isFarmer ? ('produce' as AppView) : ('buyer_requests' as AppView),
@@ -111,16 +115,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
       roles: ['farmer', 'buyer'],
     },
     {
+      id: 'escrow' as AppView,
+      label: t.escrow,
+      icon: CircleDollarSign,
+      roles: ['farmer', 'buyer', 'admin'],
+      badge: '4-Step',
+    },
+    {
       id: 'logistics_storage' as AppView,
       label: `${t.logistics} & Storage`,
       icon: Truck,
-      roles: ['farmer', 'buyer'],
+      roles: ['farmer'],
     },
     {
       id: 'profit_calculator' as AppView,
       label: t.profitCalculator,
       icon: Calculator,
-      roles: ['farmer', 'buyer'],
+      roles: ['farmer'],
     },
     {
       id: 'chat' as AppView,
@@ -148,10 +159,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       roles: ['farmer', 'buyer'],
     },
     {
+      id: 'admin_panel' as AppView,
+      label: t.adminDemo,
+      icon: ShieldAlert,
+      roles: ['admin'],
+      badge: 'Demo',
+    },
+    {
       id: 'profile' as AppView,
       label: t.profile,
       icon: UserIcon,
-      roles: ['farmer', 'buyer'],
+      roles: ['farmer', 'buyer', 'admin'],
     },
   ];
 
@@ -202,7 +220,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                   </div>
                   <p className="text-[10px] text-slate-400 truncate">
-                    {isFarmer ? '🌾 Farmer / FPO' : '🏢 Buyer / Processor'} • {user.location?.district || 'Guntur'}
+                    {isFarmer ? '🌾 Farmer / FPO' : isBuyer ? '🏢 Buyer / Processor' : '🔐 Admin / System'} • {user.location?.district || 'HQ'}
                   </p>
                 </div>
               </div>
@@ -212,7 +230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Main Navigation Items */}
         <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-thin scrollbar-thumb-slate-800">
-          {navItems.map((item) => {
+          {navItems.filter((item) => item.roles.includes(user?.role || 'farmer')).map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
 

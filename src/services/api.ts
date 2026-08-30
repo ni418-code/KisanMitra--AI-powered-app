@@ -181,6 +181,11 @@ export const api = {
       method: 'PUT',
     }),
 
+  deleteOffer: (id: string) =>
+    request<{ id: string }>(`/offers/${id}`, {
+      method: 'DELETE',
+    }),
+
   // Orders
   getOrders: (status?: string) =>
     request<{ orders: Order[]; total: number }>(`/orders${status && status !== 'All' ? `?status=${status}` : ''}`),
@@ -204,6 +209,27 @@ export const api = {
     request<{ order: Order }>(`/orders/${id}/simulate-payment`, {
       method: 'POST',
       body: JSON.stringify({ action }),
+    }),
+
+  updateEscrow: (id: string, action: 'deposit' | 'mark_delivered' | 'verify_quality' | 'release') =>
+    request<{ order: Order }>(`/orders/${id}/escrow`, {
+      method: 'POST',
+      body: JSON.stringify({ action }),
+    }),
+
+  getLogisticsTasks: () =>
+    request<{ tasks: any[]; total: number }>(`/logistics`),
+
+  createLogisticsTask: (taskData: any) =>
+    request<{ task: any }>('/logistics', {
+      method: 'POST',
+      body: JSON.stringify(taskData),
+    }),
+
+  updateLogisticsTaskStatus: (id: string, status: 'stored' | 'completed', notes?: string) =>
+    request<{ task: any }>(`/logistics/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, notes }),
     }),
 
   // Chat

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.ts';
-import { User } from '../types/index.ts';
+import { User, Order } from '../types/index.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import {
   ShieldAlert,
@@ -12,6 +12,10 @@ import {
   CheckCircle,
   AlertTriangle,
   Lock,
+  CircleDollarSign,
+  Truck,
+  BadgeCheck,
+  Zap,
 } from 'lucide-react';
 
 export const AdminPanelView: React.FC = () => {
@@ -20,18 +24,21 @@ export const AdminPanelView: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [marketSync, setMarketSync] = useState<any>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [escrowLoadingId, setEscrowLoadingId] = useState<string | null>(null);
 
   const fetchAdminData = async () => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const [statsRes, usersRes, disputesRes] = await Promise.all([
+      const [statsRes, usersRes, disputesRes, ordersRes] = await Promise.all([
         api.getAdminStats(),
         api.getAdminUsers(),
         api.getAdminDisputes(),
+        api.getOrders(),
       ]);
 
       if (statsRes.success && statsRes.data) {
@@ -46,6 +53,9 @@ export const AdminPanelView: React.FC = () => {
       }
       if (disputesRes.success && disputesRes.data) {
         setDisputes(disputesRes.data.disputes || []);
+      }
+      if (ordersRes.success && ordersRes.data) {
+        setOrders(ordersRes.data.orders || []);
       }
     } catch (err: any) {
       setErrorMsg(err?.message || 'Error loading administrative records.');
@@ -63,6 +73,13 @@ export const AdminPanelView: React.FC = () => {
     await api.triggerMarketSync();
     await fetchAdminData();
     setSyncing(false);
+  };
+
+  const handleEscrowSim = async (orderId: string, action: 'deposit' | 'mark_delivered' | 'verify_quality' | 'release') => {
+    setEscrowLoadingId(`${orderId}-${action}`);
+    await api.updateEscrow(orderId, action);
+    await fetchAdminData();
+    setEscrowLoadingId(null);
   };
 
   if (user?.role !== 'admin') {
@@ -182,6 +199,45 @@ export const AdminPanelView: React.FC = () => {
             <span className="text-slate-400 block text-[10px] uppercase font-bold">Sync Schedule</span>
             <span className="font-bold text-slate-800">Every 30 mins (Cron active)</span>
           </div>
+        </div>
+      </div>
+
+      {/* Admin Escrow Demo Controller */}
+      <div className="bg-white rounded-2xl border border-purple-300/70 shadow-sm overflow-hidden">
+        <div className="p-4 bg-purple-50 border-b border-purple-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CircleDollarSign className="w-5 h-5 text-purple-800" />
+            <h3 className="text-xs font-extrabold text-purple-950 uppercase tracking-wider">Admin Demo Controller — 4-Step Escrow Workflow</h3>
+          </div>
+          <span className="text-[10px] text-purple-700 font-bold">Simulated only</span>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-xs text-slate-600">
+            Manually drive the same shared order status used by Farmer, Buyer and System dashboards.
+          </p>
+          {orders.length === 0 ? (
+            <p className="text-xs text-slate-500 py-4 text-center">No orders available for demo simulation.</p>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {orders.map((o) => (
+                <div key={o.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="font-black text-slate-900 text-xs">{o.cropName || o.crop}</span>
+                      <span className="text-[10px] text-slate-500 block">#{o.orderId} • ₹{(o.totalAmount || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                    <span className="px-2 py-0.5 bg-purple-100 text-purple-900 text-[10px] font-black rounded-full">{o.escrowStatus || o.paymentStatus}</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    <button onClick={() => handleEscrowSim(o.id, 'deposit')} disabled={escrowLoadingId?.startsWith(o.id)} className="px-2 py-1.5 bg-purple-700 hover:bg-purple-600 text-white text-[10px] font-bold rounded-lg disabled:opacity-40">1. Deposit</button>
+                    <button onClick={() => handleEscrowSim(o.id, 'mark_delivered')} disabled={escrowLoadingId?.startsWith(o.id) || o.escrowStep !== 'funds_locked'} className="px-2 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-[10px] font-bold rounded-lg disabled:opacity-40">2. Deliver</button>
+                    <button onClick={() => handleEscrowSim(o.id, 'verify_quality')} disabled={escrowLoadingId?.startsWith(o.id) || o.escrowStep !== 'farmer_delivered'} className="px-2 py-1.5 bg-teal-700 hover:bg-teal-600 text-white text-[10px] font-bold rounded-lg disabled:opacity-40">3. Verify</button>
+                    <button onClick={() => handleEscrowSim(o.id, 'release')} disabled={escrowLoadingId?.startsWith(o.id) || o.escrowStep === 'released'} className="px-2 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg disabled:opacity-40">4. Release</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

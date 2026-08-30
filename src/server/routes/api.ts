@@ -5,6 +5,7 @@ import { ProductController } from '../controllers/productController.ts';
 import { BuyerRequestController } from '../controllers/buyerRequestController.ts';
 import { OfferController } from '../controllers/offerController.ts';
 import { OrderController } from '../controllers/orderController.ts';
+import { LogisticsController } from '../controllers/logisticsController.ts';
 import { ChatController } from '../controllers/chatController.ts';
 import { AlertController } from '../controllers/alertController.ts';
 import { AIController } from '../controllers/aiController.ts';
@@ -47,13 +48,20 @@ router.get('/offers', requireAuth, OfferController.getOffers);
 router.post('/offers', requireAuth, OfferController.createOffer);
 router.put('/offers/:id/accept', requireAuth, OfferController.acceptOffer);
 router.put('/offers/:id/reject', requireAuth, OfferController.rejectOffer);
+router.delete('/offers/:id', requireAuth, OfferController.deleteOffer);
 
-// ================= ORDERS =================
+// ================= ORDERS & ESCROW =================
 router.get('/orders', requireAuth, OrderController.getOrders);
 router.get('/orders/:id', requireAuth, OrderController.getOrderById);
 router.post('/orders', requireAuth, OrderController.createOrder);
 router.patch('/orders/:id/status', requireAuth, OrderController.updateOrderStatus);
 router.post('/orders/:id/simulate-payment', requireAuth, OrderController.simulatePayment);
+router.post('/orders/:id/escrow', requireAuth, OrderController.updateEscrow);
+
+// ================= LOGISTICS & STORAGE =================
+router.get('/logistics', requireAuth, LogisticsController.getTasks);
+router.post('/logistics', requireAuth, LogisticsController.createTask);
+router.patch('/logistics/:id/status', requireAuth, LogisticsController.updateTaskStatus);
 
 // ================= REAL-TIME CHAT =================
 router.get('/conversations', requireAuth, ChatController.getConversations);

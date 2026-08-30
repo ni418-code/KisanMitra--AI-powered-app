@@ -181,6 +181,32 @@ export interface Offer {
 export type OrderStatus = 'pending' | 'accepted' | 'processing' | 'ready_for_shipping' | 'shipped' | 'out_for_delivery' | 'delivered' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'escrow_held' | 'escrow_funded' | 'released' | 'paid' | 'refunded' | 'failed';
 
+export type EscrowStep =
+  | 'awaiting_deposit'
+  | 'funds_locked'
+  | 'farmer_delivered'
+  | 'quality_verified'
+  | 'released';
+
+export type EscrowAction = 'deposit' | 'mark_delivered' | 'verify_quality' | 'release';
+
+export interface LogisticsTask {
+  id: string;
+  orderId?: string;
+  type: 'transport' | 'storage';
+  title: string;
+  reference: string;
+  status: 'active' | 'stored' | 'completed';
+  driverName?: string;
+  vehicle?: string;
+  facility?: string;
+  pickup?: string;
+  drop?: string;
+  userWhoCreated: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
 export interface Order {
   id: string;
   orderId: string;
@@ -217,6 +243,12 @@ export interface Order {
   orderStatus: OrderStatus;
   trackingNotes?: string;
   estimatedDeliveryDate?: string;
+  escrowStep?: EscrowStep;
+  escrowStatus?: string;
+  deliveryMarked?: boolean;
+  qualityVerified?: boolean;
+  escrowReleasedAt?: string;
+  escrowHistory?: { label: string; at: string }[];
   createdAt: string;
   updatedAt?: string;
 }

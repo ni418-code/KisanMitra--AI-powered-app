@@ -25,6 +25,7 @@ import {
   Wheat,
   DollarSign,
   X,
+  Trash2,
 } from 'lucide-react';
 
 interface OffersNegotiationViewProps {
@@ -104,6 +105,25 @@ export const OffersNegotiationView: React.FC<OffersNegotiationViewProps> = ({
       await fetchOffers();
     } catch (err: any) {
       alert(`Could not decline offer: ${err.message || 'Please retry'}`);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Handle Delete
+  const handleDeleteOffer = async (offer: Offer) => {
+    if (!confirm(`Are you sure you want to delete this offer for ${offer.cropName}? This cannot be undone.`)) return;
+    setActionLoadingId(offer.id);
+    try {
+      const res = await api.deleteOffer(offer.id);
+      if (res.success) {
+        setSuccessBanner(`Offer for ${offer.cropName} deleted.`);
+        await fetchOffers();
+      } else {
+        setSuccessBanner(res.message || 'Offer could not be deleted.');
+      }
+    } catch (err: any) {
+      alert(`Could not delete offer: ${err.message || 'Please retry'}`);
     } finally {
       setActionLoadingId(null);
     }
@@ -390,6 +410,18 @@ export const OffersNegotiationView: React.FC<OffersNegotiationViewProps> = ({
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>Chat</span>
                   </button>
+
+                  {isSentByMe && ['pending', 'countered', 'rejected', 'cancelled'].includes(offer.status) && (
+                    <button
+                      onClick={() => handleDeleteOffer(offer)}
+                      disabled={actionLoadingId === offer.id}
+                      className="px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-slate-50 hover:bg-rose-50 hover:text-rose-700 border border-slate-200 hover:border-rose-300 transition cursor-pointer flex items-center space-x-1"
+                      title="Delete / cancel your offer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  )}
 
                   {isActionable ? (
                     <div className="flex items-center space-x-2">

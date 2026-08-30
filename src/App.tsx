@@ -14,14 +14,17 @@ import { SmartMatchingView } from './components/SmartMatchingView.tsx';
 import { OffersNegotiationView } from './components/OffersNegotiationView.tsx';
 import { OrdersManagementView } from './components/OrdersManagementView.tsx';
 import { LogisticsAndStorageView } from './components/LogisticsAndStorageView.tsx';
+import { EscrowManagementView } from './components/EscrowManagementView.tsx';
 import { ProfitAndSaleWindowView } from './components/ProfitAndSaleWindowView.tsx';
 import { RealtimeChatView } from './components/RealtimeChatView.tsx';
 import { AIAssistantView } from './components/AIAssistantView.tsx';
 import { PriceAlertsView } from './components/PriceAlertsView.tsx';
 import { GrievancesView } from './components/GrievancesView.tsx';
 import { ProfileView } from './components/ProfileView.tsx';
+import { AdminPanelView } from './components/AdminPanelView.tsx';
 import { CropDetailModal } from './components/CropDetailModal.tsx';
 import { FloatingAIAssistant } from './components/FloatingAIAssistant.tsx';
+import { LogisticsStatusBanner } from './components/LogisticsStatusBanner.tsx';
 import { LanguageCode } from './services/translations.ts';
 import {
   Menu,
@@ -44,6 +47,7 @@ const MainApp: React.FC = () => {
   const [authModalRole, setAuthModalRole] = useState<'farmer' | 'buyer'>('farmer');
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [selectedCropModal, setSelectedCropModal] = useState<string | null>(null);
+  const [escrowInitialOrderId, setEscrowInitialOrderId] = useState<string | null>(null);
   const [chatConvId, setChatConvId] = useState<string | null>(null);
   const [isAddProduceModalOpen, setIsAddProduceModalOpen] = useState(false);
   const [isPostReqModalOpen, setIsPostReqModalOpen] = useState(false);
@@ -86,8 +90,15 @@ const MainApp: React.FC = () => {
 
   const navigateTo = (view: AppView) => {
     // If not logged in and requesting dashboard or profile or private actions, open auth
-    if (!user && (view === 'dashboard' || view === 'produce' || view === 'buyer_requests' || view === 'deals' || view === 'offers' || view === 'orders' || view === 'chat' || view === 'profile')) {
+    if (!user && (view === 'dashboard' || view === 'produce' || view === 'buyer_requests' || view === 'deals' || view === 'offers' || view === 'orders' || view === 'escrow' || view === 'chat' || view === 'admin_panel' || view === 'profile')) {
       handleOpenAuth(authModalRole, 'login');
+      return;
+    }
+    // Farmer-only pages should never be opened by a buyer
+    if (isBuyer && (view === 'msp_table' || view === 'logistics_storage' || view === 'profit_calculator')) {
+      setCurrentView('dashboard');
+      setIsSidebarOpen(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     setCurrentView(view);
@@ -188,7 +199,7 @@ const MainApp: React.FC = () => {
 
                 {/* Active User Role Badge */}
                 <div className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold flex items-center space-x-1 border border-slate-200">
-                  <span>{isFarmer ? '🌾 Farmer / FPO' : '🏢 Buyer / Processor'}</span>
+                  <span>{isFarmer ? '🌾 Farmer / FPO' : isBuyer ? '🏢 Buyer / Processor' : '🔐 Admin / System'}</span>
                 </div>
 
                 {/* Language Picker */}
@@ -235,6 +246,7 @@ const MainApp: React.FC = () => {
                   <BuyerDashboard
                     setCurrentTab={(tab) => {
                       if (tab === 'buyerRequests') navigateTo('buyer_requests');
+                      else if (tab === 'findProduce') navigateTo('buyer_requests');
                       else if (tab === 'marketPrices') navigateTo('market_prices');
                       else if (tab === 'orders') navigateTo('orders');
                       else if (tab === 'offers') navigateTo('offers');
@@ -251,6 +263,8 @@ const MainApp: React.FC = () => {
                     setCurrentTab={(tab) => {
                       if (tab === 'myProduce') navigateTo('produce');
                       else if (tab === 'marketPrices') navigateTo('market_prices');
+                      else if (tab === 'aiAssistant' || tab === 'ai_assistant') navigateTo('ai_assistant');
+                      else if (tab === 'buyerRequests' || tab === 'buyer_requests') navigateTo('buyer_requests');
                       else if (tab === 'orders') navigateTo('orders');
                       else if (tab === 'offers') navigateTo('offers');
                       else if (tab === 'messages') navigateTo('chat');
@@ -305,7 +319,20 @@ const MainApp: React.FC = () => {
               )}
 
               {currentView === 'orders' && (
-                <OrdersManagementView openChatModal={handleOpenChatModal} />
+                <OrdersManagementView
+                  openChatModal={handleOpenChatModal}
+                  onOpenEscrow={(orderId) => {
+                    setEscrowInitialOrderId(orderId || null);
+                    navigateTo('escrow');
+                  }}
+                />
+              )}
+
+              {currentView === 'escrow' && (
+                <EscrowManagementView
+                  openChatModal={handleOpenChatModal}
+                  initialOrderId={escrowInitialOrderId}
+                />
               )}
 
               {currentView === 'logistics_storage' && <LogisticsAndStorageView />}
@@ -322,6 +349,8 @@ const MainApp: React.FC = () => {
 
               {currentView === 'ai_assistant' && <AIAssistantView />}
 
+              {currentView === 'admin_panel' && <AdminPanelView />}
+
               {currentView === 'profile' && <ProfileView />}
             </main>
 
@@ -329,6 +358,9 @@ const MainApp: React.FC = () => {
 
           {/* Persistent Floating AI Assistant in the bottom right corner */}
           <FloatingAIAssistant onNavigateToView={navigateTo} />
+
+          {/* Persistent logistics/storage tracker (stays until stored/ride completed) */}
+          <LogisticsStatusBanner onGoToLogistics={() => navigateTo('logistics_storage')} />
 
         </div>
       )}

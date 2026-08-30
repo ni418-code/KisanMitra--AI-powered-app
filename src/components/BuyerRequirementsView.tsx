@@ -124,11 +124,11 @@ export const BuyerRequirementsView: React.FC<BuyerRequirementsViewProps> = ({
       targetUserId: offerModalTarget.farmerId || 'usr-1',
       targetUserName: offerModalTarget.farmerName || 'Ramesh Patel',
       cropName: offerModalTarget.cropName,
-      offeredPricePerUnit: Number(offerPrice),
+      proposedPrice: Number(offerPrice),
       quantity: Number(offerQty),
       unit: 'kg',
       transportIncluded: includeTransport,
-      message: offerNotes,
+      notes: offerNotes,
     });
 
     if (res.success) {
@@ -285,7 +285,7 @@ export const BuyerRequirementsView: React.FC<BuyerRequirementsViewProps> = ({
                   </div>
 
                   <p className="text-xs text-slate-500 font-medium">
-                    {(prod.quantity || 0).toLocaleString('en-IN')} {prod.unit} available • {prod.qualityGrade}
+                    {(prod.quantity || 0).toLocaleString('en-IN')} {prod.unit} available • {prod.quality || prod.qualityGrade || prod.grade}
                   </p>
 
                   <div className="text-xs text-slate-600 flex items-center space-x-1">
