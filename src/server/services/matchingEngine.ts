@@ -107,17 +107,32 @@ export class MatchingEngine {
     const totalScore = Math.min(100, Math.round(cropMatch + locationMatch + quantityMatch + priceMatch + availabilityMatch));
 
     return {
+      targetId: product.id || request.id,
+      buyerId: request.buyerId,
+      buyerName: request.buyerName,
+      farmerId: product.farmerId,
+      farmerName: product.farmerName,
+      cropName: product.cropName,
+      quantity: product.quantity,
+      expectedPrice: product.expectedPrice,
+      offeredPrice: request.offeredPrice,
       product,
       buyerRequest: request,
       matchScore: totalScore,
       breakdown: {
         cropMatch,
+        cropScore: cropMatch,
         locationMatch,
+        locationScore: locationMatch,
         quantityMatch,
+        quantityScore: quantityMatch,
         priceMatch,
+        priceScore: priceMatch,
         availabilityMatch,
+        availabilityScore: availabilityMatch,
       },
       explanation: reasons.join(' • '),
+      reasons,
     };
   }
 

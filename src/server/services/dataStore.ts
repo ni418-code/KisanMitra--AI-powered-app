@@ -298,12 +298,68 @@ export const INITIAL_ALERTS: PriceAlert[] = [
   }
 ];
 
+export const INITIAL_OFFERS: Offer[] = [
+  {
+    id: 'off-1',
+    requestId: 'req-1',
+    productId: 'prod-1',
+    buyerId: 'usr-2',
+    buyerName: 'Rajesh Agro Foods Ltd',
+    farmerId: 'usr-1',
+    farmerName: 'Ramesh Patel',
+    cropName: 'Tomato',
+    quantity: 500,
+    unit: 'kg',
+    proposedPrice: 28,
+    transportIncluded: false,
+    notes: 'Direct farm-gate pickup from Guntur lot. Payment protected via Kisan Mitra Escrow.',
+    status: 'pending',
+    initiator: 'buyer',
+    createdAt: '2026-08-25T13:00:00.000Z',
+  },
+  {
+    id: 'off-2',
+    requestId: 'req-2',
+    productId: 'prod-2',
+    buyerId: 'usr-2',
+    buyerName: 'Rajesh Agro Foods Ltd',
+    farmerId: 'usr-1',
+    farmerName: 'Ramesh Patel',
+    cropName: 'Chilli',
+    quantity: 200,
+    unit: 'kg',
+    proposedPrice: 215,
+    transportIncluded: true,
+    notes: 'Grade A Guntur Sannam dry red chillies lot with moisture < 10%.',
+    status: 'accepted',
+    initiator: 'buyer',
+    createdAt: '2026-08-25T14:15:00.000Z',
+  },
+  {
+    id: 'off-3',
+    productId: 'prod-3',
+    buyerId: 'usr-2',
+    buyerName: 'Rajesh Agro Foods Ltd',
+    farmerId: 'usr-1',
+    farmerName: 'Ramesh Patel',
+    cropName: 'Paddy (Rice)',
+    quantity: 25,
+    unit: 'quintal',
+    proposedPrice: 2420,
+    transportIncluded: false,
+    notes: 'Counter offer proposed for BPT-5204 fine grain lot.',
+    status: 'countered',
+    initiator: 'farmer',
+    createdAt: '2026-08-26T09:30:00.000Z',
+  },
+];
+
 // Runtime store instance
 class DataStore {
   users: User[] = [...INITIAL_USERS];
   products: Product[] = [...INITIAL_PRODUCTS];
   buyerRequests: BuyerRequest[] = [...INITIAL_BUYER_REQUESTS];
-  offers: Offer[] = [];
+  offers: Offer[] = [...INITIAL_OFFERS];
   orders: Order[] = [...INITIAL_ORDERS];
   conversations: Conversation[] = [...INITIAL_CONVERSATIONS];
   notifications: NotificationItem[] = [...INITIAL_NOTIFICATIONS];

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../services/api.ts';
-import { getLocalizedCropName } from '../services/translations.ts';
+import { LanguageCode, getLocalizedCropName } from '../services/translations.ts';
 import {
   Bot,
   X,
@@ -20,6 +20,8 @@ import {
   ShieldCheck,
   CreditCard,
   Layers,
+  ChevronDown,
+  Globe,
 } from 'lucide-react';
 
 interface FloatingAIAssistantProps {
@@ -37,31 +39,163 @@ interface ChatMsg {
   };
 }
 
+interface LocaleContent {
+  title: string;
+  sub: string;
+  greeting: string;
+  placeholder: string;
+  speechLocale: string;
+  listenVoice: string;
+  quickPrompts: Array<{ label: string; text: string }>;
+  labels: {
+    liveMandi: string;
+    govSource: string;
+    recommendation: string;
+    verifiedBuyers: string;
+    found: string;
+    need: string;
+    match: string;
+    transaction: string;
+    securedEscrow: string;
+    workflowTitle: string;
+    storageTitle: string;
+    transportTitle: string;
+    consulting: string;
+  };
+}
+
+const LOCALE_CONTENT: Record<string, LocaleContent> = {
+  te: {
+    title: 'కిసాన్ మిత్ర సహాయక్',
+    sub: 'AGMARKNET & MSP లైవ్ మార్కెట్ నిఘా',
+    greeting: 'నమస్కారం 🙏 ! నేను మీ AI కిసాన్ మిత్ర సహాయకుడిని. మీకు ఈరోజు ఎలా సహాయపడగలను? టమాటా ధరలు, కొనుగోలుదారులు, ఎస్క్రో పేమెంట్ల గురించి నన్ను తెలుగులోనే అడగండి!',
+    placeholder: 'మీ ప్రశ్నను తెలుగులో అడగండి (ఉదా: టమాటా ధర ఎంత?)...',
+    speechLocale: 'te-IN',
+    listenVoice: 'తెలుగులో వినండి (Speak)',
+    quickPrompts: [
+      { label: '🍅 టమాటా ప్రస్తుత ధర ఎంత?', text: 'గుంటూరు మార్కెట్‌లో టమాటా ప్రస్తుత ధర మరియు సిఫార్సు ఏమిటి?' },
+      { label: '🏢 టమాటాలకు కొనుగోలుదారులు ఉన్నారా?', text: 'నా టమాటాలకు ధృవీకరించిన కొనుగోలుదారులు మరియు కంపెనీలు ఎవరున్నారు?' },
+      { label: '💳 నా చెల్లింపు (Payment) స్థితి', text: 'నా చెల్లింపు మరియు ఎస్క్రో రక్షణ స్థితి ఏమిటి?' },
+      { label: 'ℹ️ ఈ వెబ్‌సైట్ ఎలా పనిచేస్తుంది?', text: 'కిసాన్ మిత్ర ప్లాట్‌ఫారమ్ ఎలా పనిచేస్తుంది?' },
+      { label: '🏬 సమీప కోల్డ్ స్టోరేజ్ ఎక్కడ ఉంది?', text: 'సమీపంలోని కోల్డ్ స్టోరేజ్ మరియు నిల్వ గోదాములు ఎక్కడ ఉన్నాయి?' },
+      { label: '🚚 రవాణా ఛార్జీలు మరియు బుకింగ్', text: 'వ్యవసాయ రవాణా వాహన వివరాలు మరియు బుకింగ్ ఛార్జీలు ఏమిటి?' },
+    ],
+    labels: {
+      liveMandi: 'లైవ్ మార్కెట్ ధరలు (Live Mandi Rates):',
+      govSource: 'భారత ప్రభుత్వ AGMARKNET',
+      recommendation: 'సిఫార్సు: విజయవాడలో క్వింటాల్‌కు ₹300 ఎక్కువ లభిస్తుంది. రవాణా ఖర్చు తీసివేసినా నికర రాబడి పెరుగుతుంది.',
+      verifiedBuyers: 'ధృవీకరించిన కొనుగోలుదారులు (Verified Buyers):',
+      found: 'కనుగొనబడినవి',
+      need: 'కావాల్సిన పరిమాణం',
+      match: 'సరిపోలిక',
+      transaction: 'ఎస్క్రో లావాదేవీ',
+      securedEscrow: '✓ 100% ఎస్క్రో ఖాతాలో భద్రపరచబడింది',
+      workflowTitle: 'కిసాన్ మిత్ర 8-దశల సురక్షిత లావాదేవీ విధానం:',
+      storageTitle: 'సమీప నిల్వ & కోల్డ్ స్టోరేజ్ కేంద్రాలు:',
+      transportTitle: 'అందుబాటులో ఉన్న వ్యవసాయ రవాణా వాహనాలు:',
+      consulting: 'మార్కెట్ డేటాబేస్ పరిశీలిస్తోంది...',
+    },
+  },
+  hi: {
+    title: 'किसान मित्र सहायक',
+    sub: 'AGMARKNET एवं MSP लाइव मंडी इंटेलिजेंस',
+    greeting: 'नमस्ते 🙏 ! मैं आपका किसान मित्र AI सहायक हूँ। आज मैं आपकी क्या सहायता कर सकता हूँ? टमाटर भाव, खरीदार, या भुगतान के बारे में मुझसे हिन्दी में पूछें!',
+    placeholder: 'अपना सवाल हिन्दी में पूछें (उदा: टमाटर का भाव क्या है?)...',
+    speechLocale: 'hi-IN',
+    listenVoice: 'हिन्दी में सुनें (Speak)',
+    quickPrompts: [
+      { label: '🍅 आज टमाटर का भाव क्या है?', text: 'गुंटूर मंडी में टमाटर का वर्तमान भाव और सिफारिश क्या है?' },
+      { label: '🏢 क्या टमाटर के थोक खरीदार उपलब्ध हैं?', text: 'टमाटर के लिए कौन-से सत्यापित खरीदार सक्रिय हैं?' },
+      { label: '💳 मेरी भुगतान (Payment) स्थिति', text: 'मेरी भुगतान और एस्क्रो सुरक्षा स्थिति क्या है?' },
+      { label: 'ℹ️ यह वेबसाइट कैसे काम करती है?', text: 'किसान मित्र प्लेटफॉर्म कैसे काम करता है?' },
+      { label: '🏬 नजदीकी कोल्ड स्टोरेज कहाँ उपलब्ध है?', text: 'नजदीकी कोल्ड स्टोरेज और गोदाम कहाँ हैं?' },
+      { label: '🚚 परिवहन (ट्रक) बुकिंग दरें', text: 'कृषि परिवहन गाड़ियाँ और बुकिंग दरें क्या हैं?' },
+    ],
+    labels: {
+      liveMandi: 'लाइव मंडी भाव (Live Mandi Rates):',
+      govSource: 'भारत सरकार AGMARKNET',
+      recommendation: 'सिफारिश: विजयवाड़ा में ₹300/क्विंटल अधिक भाव है। परिवहन खर्च काटकर भी शुद्ध मुनाफा बेहतर रहेगा।',
+      verifiedBuyers: 'सत्यापित थोक खरीदार (Verified Buyers):',
+      found: 'उपलब्ध',
+      need: 'मांग',
+      match: 'मैच',
+      transaction: 'एस्क्रो सुरक्षित लेन-देन',
+      securedEscrow: '✓ 100% एस्क्रो खाते में सुरक्षित',
+      workflowTitle: 'किसान मित्र 8-चरणीय सुरक्षित लेन-देन प्रक्रिया:',
+      storageTitle: 'नजदीकी कोल्ड स्टोरेज एवं सुरक्षित गोदाम:',
+      transportTitle: 'उपलब्ध कृषि परिवहन गाड़ियाँ:',
+      consulting: 'मंडी डेटाबेस से संपर्क हो रहा है...',
+    },
+  },
+  en: {
+    title: 'KisanMitra Sahayak',
+    sub: 'Grounded in AGMARKNET & CACP MSP',
+    greeting: 'Namaste 🙏 ! I am AI KisanMitra Sahayak. How can I help you today? Ask about Mandi rates, MSP benchmarks, buyers, and escrow payments!',
+    placeholder: 'Ask in your preferred language...',
+    speechLocale: 'en-IN',
+    listenVoice: 'Listen Voice',
+    quickPrompts: [
+      { label: '🍅 Current price of Tomato?', text: 'How is the current price and market trend of Tomato?' },
+      { label: '🏢 Active buyers for wholesale tomatoes?', text: 'Are there any active buyers for wholesale tomatoes?' },
+      { label: '💳 My Payment Status', text: 'What is my current payment and escrow status?' },
+      { label: 'ℹ️ How this Website works?', text: 'How does the KisanMitra platform work?' },
+      { label: '🏬 Nearby cold storage options', text: 'Where can I store produce in cold storage nearby?' },
+      { label: '🚚 Transport booking rates', text: 'What are the transport options and rates?' },
+    ],
+    labels: {
+      liveMandi: 'Live Mandi Rates:',
+      govSource: 'data.gov.in AGMARKNET',
+      recommendation: 'Recommendation: Vijayawada offers ₹300/qtl higher return; offset against ~₹150 transit cost for +₹150 net in-pocket.',
+      verifiedBuyers: 'Verified Buyers:',
+      found: 'Found',
+      need: 'Demand',
+      match: 'Match',
+      transaction: 'Escrow Transaction',
+      securedEscrow: '✓ SECURED IN MILESTONE ESCROW',
+      workflowTitle: 'KisanMitra 8-Step Transaction Flow:',
+      storageTitle: 'Nearby Storage Facilities:',
+      transportTitle: 'Available Transport Carriers:',
+      consulting: 'Consulting AGMARKNET database...',
+    },
+  },
+};
+
 export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavigateToView }) => {
-  const { user, language, t } = useAuth();
+  const { user, language, setLanguage, t } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const activeLocale = LOCALE_CONTENT[language] || LOCALE_CONTENT.en;
 
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       sender: 'ai',
-      text: `నమస్కారం! I am AI KisanMitra Sahayak. How can I help you today? Ask in Telugu, Hindi, or English!`,
+      text: activeLocale.greeting,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       sources: ['AGMARKNET Live API', 'CACP MSP 2024-25'],
     },
   ]);
 
-  const quickPrompts = [
-    { label: '🍅 Tomato price entha undi?', text: 'Tomato price entha undi?' },
-    { label: '🏢 Na tomatoes ki buyers unnara?', text: 'Na tomatoes ki buyers unnara?' },
-    { label: '💳 Payment ekkada undi?', text: 'Payment ekkada undi?' },
-    { label: 'ℹ️ Ee website ela pani chestundi?', text: 'Ee website ela pani chestundi?' },
-    { label: '🏬 Nearby cold storage options', text: 'Where can I store tomatoes in cold storage nearby?' },
-    { label: '🚚 Transport booking rates', text: 'What are the transport options and rates to Vijayawada?' },
-  ];
+  // If language changes and chat is untouched, update greeting to active language
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].sender === 'ai' && !prev[0].toolResult) {
+        return [
+          {
+            sender: 'ai',
+            text: activeLocale.greeting,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            sources: ['AGMARKNET Live API', 'CACP MSP 2024-25'],
+          },
+        ];
+      }
+      return prev;
+    });
+  }, [language, activeLocale.greeting]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -92,67 +226,92 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
     // Check if application tools should be triggered client-side for immediate rich card display
     let toolResult: ChatMsg['toolResult'] | undefined;
 
-    if (q.includes('tomato') && (q.includes('price') || q.includes('ధర') || q.includes('entha') || q.includes('rate') || q.includes('भाव'))) {
+    if (q.includes('tomato') || q.includes('టమాటా') || q.includes('టమోటా') || q.includes('टमाटर') || q.includes('price') || q.includes('ధర') || q.includes('भाव')) {
       toolResult = {
         type: 'market_price',
         data: {
-          crop: 'Tomato',
+          crop: getLocalizedCropName('Tomato', language),
           guntur: { modal: 2800, perKg: 28, trend: '+8%' },
           vijayawada: { modal: 3100, perKg: 31, trend: '+12%' },
           tenali: { modal: 2950, perKg: 29.5, trend: '+5%' },
-          mspBench: 'No official MSP (Perishable Crop). Protected via Operation Greens scheme.',
         },
       };
-    } else if (q.includes('buyer') || q.includes('కొనుగోలు') || q.includes('buyers') || q.includes('खरीदार')) {
+    } else if (q.includes('buyer') || q.includes('కొనుగోలు') || q.includes('buyers') || q.includes('खरीदार') || q.includes('కంపెనీ')) {
       toolResult = {
         type: 'buyers',
         data: {
-          crop: 'Tomato',
+          crop: getLocalizedCropName('Tomato', language),
           matches: [
-            { name: 'ABC Agro Processing Ltd', location: 'Vijayawada', demand: '2,000 kg', price: '₹32/kg', match: '96%' },
-            { name: 'South Fresh Retail Pvt Ltd', location: 'Guntur', demand: '1,500 kg', price: '₹30/kg', match: '92%' },
-            { name: 'Deccan Food Processors', location: 'Hyderabad', demand: '5,000 kg', price: '₹34/kg', match: '88%' },
+            { name: 'ABC Agro Processing Ltd', location: language === 'te' ? 'విజయవాడ' : 'Vijayawada', demand: '2,000 kg', price: '₹32/kg', match: '96%' },
+            { name: 'South Fresh Retail Pvt Ltd', location: language === 'te' ? 'గుంటూరు' : 'Guntur', demand: '1,500 kg', price: '₹30/kg', match: '92%' },
+            { name: 'Deccan Food Processors', location: language === 'te' ? 'హైదరాబాద్' : 'Hyderabad', demand: '5,000 kg', price: '₹34/kg', match: '88%' },
           ],
         },
       };
-    } else if (q.includes('payment') || q.includes('చెల్లింపు') || q.includes('ekkada') || q.includes('भुगतान') || q.includes('money')) {
+    } else if (q.includes('payment') || q.includes('చెల్లింపు') || q.includes('పేమెంట్') || q.includes('భుगतान') || q.includes('money') || q.includes('డబ్బు')) {
       toolResult = {
         type: 'payment_status',
         data: {
           orderId: 'KM-ORD-9021',
           amount: '₹34,000',
-          escrowStatus: 'SECURED IN MILESTONE ESCROW',
-          status: 'Waiting for Delivery Confirmation by Buyer',
-          timeline: 'Payment funded by Buyer on 27 Aug 2026. Release immediately upon QR scan delivery handoff.',
+          escrowStatus: activeLocale.labels.securedEscrow,
+          status: language === 'te' ? 'కొనుగోలుదారు డెలివరీ నిర్ధారణ కోసం వేచి ఉంది' : language === 'hi' ? 'खरीदार द्वारा डिलीवरी पुष्टि की प्रतीक्षा है' : 'Waiting for Delivery Confirmation by Buyer',
+          timeline: language === 'te'
+            ? 'కొనుగోలుదారు 27 ఆగస్టు 2026న నిధులను ఎస్క్రోలో జమ చేశారు. డెలివరీ QR స్కాన్ పూర్తయిన వెంటనే డబ్బు మీ ఖాతాలో జమ అవుతుంది.'
+            : language === 'hi'
+            ? 'खरीदार ने अग्रिम राशि एस्क्रो में जमा कर दी है। डिलीवरी स्कैन होते ही धनराशि तुरंत आपके बैंक खाते में पहुंचेगी।'
+            : 'Payment funded by Buyer on 27 Aug 2026. Release immediately upon QR scan delivery handoff.',
         },
       };
-    } else if (q.includes('website') || q.includes('pani') || q.includes('work') || q.includes('ela') || q.includes('how') || q.includes('process')) {
+    } else if (q.includes('website') || q.includes('pani') || q.includes('work') || q.includes('ela') || q.includes('ఎలా') || q.includes('काम') || q.includes('process')) {
       toolResult = {
         type: 'workflow',
         data: {
-          steps: [
-            '1. Register & Select Language (Telugu, Hindi, English)',
-            '2. Select Preferred Products (Tomato, Chilli, Cotton, etc.)',
-            '3. Create Digital Lot (Quantity, Grade A/B/C, Harvest Date)',
-            '4. AI Smart Matching with verified corporate buyers',
-            '5. Bilateral Negotiation & Counter-Offer exchange',
-            '6. Digital Agreement Signing',
-            '7. Milestone Escrow Payment Funded',
-            '8. Vehicle Transport Dispatch & Delivery Handoff',
-          ],
+          steps: language === 'te'
+            ? [
+                '1. రిజిస్ట్రేషన్ & భాష ఎంపిక (తెలుగు, హిందీ, ఇంగ్లీష్)',
+                '2. మీ ఉత్పత్తుల ఎంపిక (టమాటా, మిరప, పత్తి, వరి మొదలైనవి)',
+                '3. డిజిటల్ లాట్ నమోదు (పరిమాణం, గ్రేడ్ A/B/C, కోత తేదీ)',
+                '4. AI స్మార్ట్ మ్యాచింగ్ ద్వారా ధృవీకరించిన కొనుగోలుదారుల అనుసంధానం',
+                '5. పరస్పర చర్చలు & ఆఫర్ల మార్పిడి',
+                '6. డిజిటల్ లీగల్ అగ్రిమెంట్ ఆన్‌లైన్ సంతకం',
+                '7. రక్షిత మైల్‌స్టోన్ ఎస్క్రో ఖాతాలో నిధుల జమ',
+                '8. సమీప వాహన రవాణా & సురక్షిత డెలివరీ రసీదు',
+              ]
+            : language === 'hi'
+            ? [
+                '1. पंजीकरण एवं भाषा चयन (हिन्दी, तेलुगु, अंग्रेजी)',
+                '2. उत्पाद एवं फसल चयन (टमाटर, मिर्च, धान, कपास आदि)',
+                '3. डिजिटल लॉट विवरण (मात्रा, ग्रेड A/B/C, कटाई तिथि)',
+                '4. AI स्मार्ट मैचिंग द्वारा सत्यापित खरीदारों से जुड़ाव',
+                '5. द्विपक्षीय बातचीत एवं मोलभाव (Counter-Offers)',
+                '6. सुरक्षित डिजिटल एग्रीमेंट पर हस्ताक्षर',
+                '7. एस्क्रो खाते में सुरक्षित अग्रिम भुगतान',
+                '8. नजदीकी कृषि परिवहन एवं सुरक्षित डिलीवरी',
+              ]
+            : [
+                '1. Register & Select Language (Telugu, Hindi, English)',
+                '2. Select Preferred Products (Tomato, Chilli, Cotton, etc.)',
+                '3. Create Digital Lot (Quantity, Grade A/B/C, Harvest Date)',
+                '4. AI Smart Matching with verified corporate buyers',
+                '5. Bilateral Negotiation & Counter-Offer exchange',
+                '6. Digital Agreement Signing',
+                '7. Milestone Escrow Payment Funded',
+                '8. Vehicle Transport Dispatch & Delivery Handoff',
+              ],
         },
       };
-    } else if (q.includes('storage') || q.includes('cold') || q.includes('నిల్వ') || q.includes('गोदाम')) {
+    } else if (q.includes('storage') || q.includes('cold') || q.includes('నిల్వ') || q.includes('గోదాము') || q.includes('गोदाम')) {
       toolResult = {
         type: 'storage',
         data: {
           facilities: [
-            { name: 'Guntur Multi-Chamber Cold Storage', distance: '8.4 km', type: 'Cold (Perishables)', available: '15 tons', rate: '₹45/qtl/month' },
-            { name: 'Andhra State Warehousing Corp (Warehouse B)', distance: '12.1 km', type: 'Dry (Paddy/Cotton)', available: '40 tons', rate: '₹22/qtl/month' },
+            { name: language === 'te' ? 'గుంటూరు మల్టీ-ఛాంబర్ కోల్డ్ స్టోరేజ్' : 'Guntur Multi-Chamber Cold Storage', distance: '8.4 km', type: language === 'te' ? 'శీతల నిల్వ (కూరగాయలు)' : 'Cold (Perishables)', available: '15 tons', rate: '₹45/qtl/month' },
+            { name: language === 'te' ? 'ఆంధ్రప్రదేశ్ వేర్‌హౌసింగ్ కార్పొరేషన్ (గోదాము B)' : 'Andhra State Warehousing Corp (Warehouse B)', distance: '12.1 km', type: language === 'te' ? 'పొడి గోదాము (వరి/పత్తి)' : 'Dry (Paddy/Cotton)', available: '40 tons', rate: '₹22/qtl/month' },
           ],
         },
       };
-    } else if (q.includes('transport') || q.includes('truck') || q.includes('రవాణా') || q.includes('vehicle') || q.includes('गाड़ी')) {
+    } else if (q.includes('transport') || q.includes('truck') || q.includes('రవాణా') || q.includes('వాహనం') || q.includes('गाड़ी') || q.includes('परिवहन')) {
       toolResult = {
         type: 'transport',
         data: {
@@ -164,7 +323,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
       };
     }
 
-    // Also call server AI endpoint for natural language answer
+    // Call server AI endpoint
     const historyForAI = messages.map((m) => ({
       role: m.sender === 'user' ? ('user' as const) : ('model' as const),
       text: m.text,
@@ -197,11 +356,34 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
           },
         ]);
       } else {
-        // High quality grounded fallback
-        let fallbackText = 'I am consulting the live mandi database. Here are the verified figures:';
-        if (language === 'te') {
-          fallbackText = 'లైవ్ అగ్రికల్చరల్ డేటాబేస్ నుండి తాజా సమాచారం ఇక్కడ ఇవ్వబడింది:';
+        // High quality grounded fallback in user's selected language
+        let fallbackText = '';
+        if (q.includes('tomato') || q.includes('టమాటా') || q.includes('टमाटर')) {
+          fallbackText = language === 'te' 
+            ? 'గుంటూరు మార్కెట్‌లో టమాటా ప్రస్తుత మోడల్ ధర ₹28/కేజీ (క్వింటాల్‌కు ₹2,800). హైదరాబాద్‌లో ₹31/కేజీ ఉన్నప్పటికీ, రవాణా ఖర్చు తీసివేస్తే స్థానిక అమ్మకం సమాన నికర రాబడిని ఇస్తుంది. రాజేష్ ఆగ్రో ఫుడ్స్ ₹28/కేజీకి కొనుగోలుకు సిద్ధంగా ఉన్నారు.'
+            : language === 'hi'
+            ? 'गुंटूर मंडी में टमाटर का वर्तमान थोक भाव ₹28/किलो (₹2,800/क्विंटल) है। हैदराबाद में ₹31/किलो भाव है, लेकिन ₹3/किलो परिवहन लागत घटाने के बाद स्थानीय बिक्री में भी बराबर शुद्ध लाभ मिलता है।'
+            : 'Current Tomato modal price in Guntur Mandi is ₹28/kg (₹2,800/Quintal). Verified buyer Rajesh Agro Foods Ltd is currently offering ₹28/kg for 1,000 kg with direct pickup.';
+        } else if (q.includes('buyer') || q.includes('కొనుగోలు') || q.includes('खरीदार')) {
+          fallbackText = language === 'te'
+            ? 'అవును! మీ పంటలకు రాజేష్ ఆగ్రో ఫుడ్స్ వంటి ధృవీకరించిన కొనుగోలుదారులు అందుబాటులో ఉన్నారు. వారు టమాటాలు ₹28/కేజీ, మిరప ₹215/కేజీకి కొనుగోలు చేస్తున్నారు. "Smart Matching" ట్యాబ్‌లో ఆఫర్ పంపండి.'
+            : language === 'hi'
+            ? 'हाँ! सत्यापित थोक खरीदार सक्रिय हैं। वे टमाटर ₹28/किलो और मिर्च ₹215/किलो के भाव से खरीद रहे हैं।'
+            : 'Yes! Verified institutional buyers like Rajesh Agro Foods Ltd are actively buying fresh produce on KisanMitra. You can send direct offers via the Smart Matching tab.';
+        } else if (q.includes('payment') || q.includes('చెల్లింపు') || q.includes('भुगतान')) {
+          fallbackText = language === 'te'
+            ? 'కిసాన్ మిత్రలో చెల్లింపులు 100% సురక్షితమైన ఎస్క్రో ఖాతా ద్వారా రక్షించబడతాయి. కొనుగోలుదారు ముందుగానే నిధులను జమ చేస్తారు, డెలివరీ ధృవీకరణ జరిగిన వెంటనే డబ్బు మీ ఖాతాకు బదిలీ అవుతుంది.'
+            : language === 'hi'
+            ? 'किसान मित्र पर भुगतान 100% सुरक्षित एस्क्रो खाते में जमा रहता है। डिलीवरी पुष्टि के तुरंत बाद सीधे आपके बैंक खाते में अंतरित हो जाता है।'
+            : 'Transactions are 100% secured via Milestone Escrow. Funds are deposited by the buyer in advance and released directly to your bank account upon delivery verification.';
+        } else {
+          fallbackText = language === 'te'
+            ? 'కిసాన్ మిత్ర ప్రత్యక్ష మార్కెట్ సమాచారం: గుంటూరు టమాటా ధర ₹28/కేజీ. వరి MSP ₹2,300/క్వింటాల్. ధృవీకరించిన కొనుగోలుదారులు అందుబాటులో ఉన్నారు.'
+            : language === 'hi'
+            ? 'किसान मित्र सत्यापित मंडी जानकारी: गुंटूर टमाटर थोक भाव ₹28/किलो है और धान का सरकारी एमएसपी ₹2,300/क्विंटल है।'
+            : 'Verified KisanMitra intelligence: Guntur Tomato price is ₹28/kg (₹2,800/qtl). Verified buyers like Rajesh Agro Foods are purchasing at ₹28/kg. Official Paddy MSP is ₹2,300/qtl.';
         }
+
         setMessages((prev) => [
           ...prev,
           {
@@ -214,11 +396,17 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
       }
     } catch {
       setLoading(false);
+      const fallbackText = language === 'te'
+        ? 'కిసాన్ మిత్ర సమాచారం: గుంటూరు టమాటా మోడల్ ధర ₹28/కేజీ, మిరప ₹215/కేజీ. ఎస్క్రో చెల్లింపు 100% రక్షించబడింది.'
+        : language === 'hi'
+        ? 'किसान मित्र जानकारी: गुंटूर टमाटर भाव ₹28/किलो, मिर्च ₹215/किलो। एस्क्रो भुगतान पूरी तरह सुरक्षित है।'
+        : 'Verified KisanMitra intelligence: Guntur Tomato price is ₹28/kg (₹2,800/qtl). Official Paddy MSP is ₹2,300/qtl.';
+
       setMessages((prev) => [
         ...prev,
         {
           sender: 'ai',
-          text: 'Here is the verified data from KisanMitra:',
+          text: fallbackText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           toolResult,
         },
@@ -229,8 +417,30 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
   const handleSpeak = (text: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+      // Remove any markdown asterisks or special formatting for clean speech
+      const cleanText = text.replace(/[*#_`•]/g, '').trim();
+      const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.rate = 0.95;
+
+      const langMap: Record<string, string> = {
+        te: 'te-IN',
+        hi: 'hi-IN',
+        ta: 'ta-IN',
+        kn: 'kn-IN',
+        ml: 'ml-IN',
+        mr: 'mr-IN',
+        en: 'en-IN',
+      };
+      const targetLang = langMap[language] || 'te-IN';
+      utterance.lang = targetLang;
+
+      // Select matching voice
+      const voices = window.speechSynthesis.getVoices();
+      const voice = voices.find((v) => v.lang === targetLang || v.lang.startsWith(targetLang.split('-')[0]));
+      if (voice) {
+        utterance.voice = voice;
+      }
+
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -250,7 +460,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
           </div>
           <div className="text-left">
             <div className="flex items-center space-x-1.5">
-              <span className="text-xs font-black tracking-tight">AI KisanMitra</span>
+              <span className="text-xs font-black tracking-tight">{activeLocale.title}</span>
               <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
             </div>
             <p className="text-[10px] text-emerald-100 font-medium">
@@ -266,27 +476,67 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
           className={`bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-200 animate-in fade-in zoom-in-95 ${
             isExpanded
               ? 'w-[90vw] md:w-[700px] h-[80vh]'
-              : 'w-[92vw] sm:w-[420px] h-[540px]'
+              : 'w-[92vw] sm:w-[420px] h-[550px]'
           }`}
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-4 flex items-center justify-between shadow-xs shrink-0">
+          {/* Header with in-chat language converter */}
+          <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-3.5 sm:p-4 flex items-center justify-between shadow-xs shrink-0">
             <div className="flex items-center space-x-2.5">
               <div className="w-9 h-9 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shadow-md">
                 <Bot className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
-                  <h3 className="font-black text-sm text-white">KisanMitra Sahayak</h3>
-                  <span className="px-1.5 py-0.5 rounded bg-emerald-700 text-emerald-100 text-[9px] font-black uppercase">
-                    AI Copilot
-                  </span>
+                  <h3 className="font-black text-sm text-white">{activeLocale.title}</h3>
                 </div>
-                <p className="text-[10px] text-emerald-200">Grounded in AGMARKNET & CACP MSP</p>
+                <p className="text-[10px] text-emerald-200">{activeLocale.sub}</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-1.5">
+              
+              {/* Language Selector Dropdown inside Chat Widget */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+                  className="flex items-center space-x-1 px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold text-emerald-200 transition cursor-pointer border border-white/20"
+                  title="Change AI Language"
+                >
+                  <Globe className="w-3.5 h-3.5 text-amber-300" />
+                  <span className="uppercase text-[11px] font-black">{language}</span>
+                  <ChevronDown className="w-3 h-3 text-emerald-200" />
+                </button>
+
+                {isLangDropdownOpen && (
+                  <div className="absolute right-0 mt-1.5 w-40 bg-slate-900 text-white rounded-xl shadow-2xl border border-slate-700 py-1 z-50 animate-in fade-in">
+                    <p className="px-2.5 py-1 text-[9px] font-black uppercase text-slate-400">Language / భాష</p>
+                    {[
+                      { code: 'te', label: 'తెలుగు (Telugu)' },
+                      { code: 'hi', label: 'हिन्दी (Hindi)' },
+                      { code: 'en', label: 'English' },
+                      { code: 'ta', label: 'தமிழ் (Tamil)' },
+                      { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
+                      { code: 'ml', label: 'മലയാളം (Malayalam)' },
+                      { code: 'mr', label: 'मराठी (Marathi)' },
+                    ].map((l) => (
+                      <button
+                        key={l.code}
+                        onClick={() => {
+                          setLanguage(l.code as LanguageCode);
+                          setIsLangDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between hover:bg-emerald-800 transition ${
+                          language === l.code ? 'font-black text-amber-300 bg-emerald-950/60' : 'text-slate-200'
+                        }`}
+                      >
+                        <span>{l.label}</span>
+                        {language === l.code && <CheckCircle2 className="w-3 h-3 text-amber-300" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition cursor-pointer"
@@ -304,9 +554,9 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
             </div>
           </div>
 
-          {/* Quick Action Prompt Chips */}
+          {/* Quick Action Prompt Chips in active language */}
           <div className="p-2 bg-slate-50 border-b border-slate-200 overflow-x-auto flex space-x-1.5 scrollbar-none shrink-0">
-            {quickPrompts.map((p, idx) => (
+            {(activeLocale?.quickPrompts || []).map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSendMessage(p.text)}
@@ -319,22 +569,22 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
 
           {/* Messages Body */}
           <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
-            {messages.map((m, idx) => (
+            {(messages || []).map((m, idx) => (
               <div
                 key={idx}
                 className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'} space-y-1`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed shadow-xs ${
+                  className={`max-w-[88%] rounded-2xl p-3.5 text-xs leading-relaxed shadow-xs ${
                     m.sender === 'user'
-                      ? 'bg-emerald-800 text-white rounded-br-none'
+                      ? 'bg-emerald-800 text-white rounded-br-none font-medium'
                       : 'bg-white text-slate-800 border border-slate-200/90 rounded-bl-none'
                   }`}
                 >
                   <p className="whitespace-pre-line">{m.text}</p>
 
-                  {/* Grounded Tool Card Rendering */}
-                  {m.toolResult && (
+                  {/* Grounded Tool Card Rendering in active language */}
+                  {m.toolResult && m.toolResult.data && (
                     <div className="mt-3 pt-2.5 border-t border-slate-200/80 space-y-2">
                       
                       {/* Market Prices Card */}
@@ -343,29 +593,29 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
                           <div className="flex items-center justify-between font-extrabold text-emerald-950">
                             <span className="flex items-center space-x-1">
                               <TrendingUp className="w-3.5 h-3.5 text-emerald-700" />
-                              <span>Live {m.toolResult.data.crop} Mandi Rates:</span>
+                              <span>{activeLocale.labels.liveMandi}</span>
                             </span>
-                            <span className="text-[10px] text-emerald-700">data.gov.in</span>
+                            <span className="text-[10px] text-emerald-700">{activeLocale.labels.govSource}</span>
                           </div>
                           <div className="grid grid-cols-3 gap-1 text-center">
                             <div className="bg-white p-1.5 rounded-lg border border-emerald-100">
-                              <span className="text-[9px] text-slate-400 block">Guntur</span>
+                              <span className="text-[9px] text-slate-400 block">{language === 'te' ? 'గుంటూరు' : language === 'hi' ? 'गुंटूर' : 'Guntur'}</span>
                               <span className="font-black text-slate-900">₹28/kg</span>
                               <span className="text-[9px] text-emerald-700 block">+8%</span>
                             </div>
                             <div className="bg-white p-1.5 rounded-lg border border-emerald-100">
-                              <span className="text-[9px] text-slate-400 block">Vijayawada</span>
+                              <span className="text-[9px] text-slate-400 block">{language === 'te' ? 'విజయవాడ' : language === 'hi' ? 'विजयवाड़ा' : 'Vijayawada'}</span>
                               <span className="font-black text-emerald-800">₹31/kg</span>
                               <span className="text-[9px] text-emerald-700 block">+12%</span>
                             </div>
                             <div className="bg-white p-1.5 rounded-lg border border-emerald-100">
-                              <span className="text-[9px] text-slate-400 block">Tenali</span>
+                              <span className="text-[9px] text-slate-400 block">{language === 'te' ? 'తెనాలి' : language === 'hi' ? 'तेनाली' : 'Tenali'}</span>
                               <span className="font-black text-slate-900">₹29.5/kg</span>
                               <span className="text-[9px] text-emerald-700 block">+5%</span>
                             </div>
                           </div>
                           <p className="text-[10px] text-emerald-900 font-semibold italic">
-                            Recommendation: Vijayawada offers ₹300/qtl higher return; offset against ~₹150 transit cost for +₹150 net in-pocket.
+                            {activeLocale.labels.recommendation}
                           </p>
                         </div>
                       )}
@@ -376,20 +626,20 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
                           <div className="flex items-center justify-between font-extrabold text-blue-950">
                             <span className="flex items-center space-x-1">
                               <Building2 className="w-3.5 h-3.5 text-blue-700" />
-                              <span>Verified Buyers for {m.toolResult.data.crop}:</span>
+                              <span>{activeLocale.labels.verifiedBuyers}</span>
                             </span>
-                            <span className="text-[10px] text-blue-700">3 Found</span>
+                            <span className="text-[10px] text-blue-700">3 {activeLocale.labels.found}</span>
                           </div>
                           <div className="space-y-1">
-                            {m.toolResult.data.matches.map((b: any, bIdx: number) => (
+                            {(m.toolResult.data.matches || []).map((b: any, bIdx: number) => (
                               <div key={bIdx} className="bg-white p-2 rounded-lg border border-blue-100 flex items-center justify-between">
                                 <div>
                                   <span className="font-bold text-slate-900 block">{b.name}</span>
-                                  <span className="text-[10px] text-slate-500">{b.location} • Need {b.demand}</span>
+                                  <span className="text-[10px] text-slate-500">{b.location} • {activeLocale.labels.need}: {b.demand}</span>
                                 </div>
                                 <div className="text-right">
                                   <span className="font-black text-emerald-800">{b.price}</span>
-                                  <span className="block text-[9px] font-bold text-blue-700">{b.match} Match</span>
+                                  <span className="block text-[9px] font-bold text-blue-700">{b.match} {activeLocale.labels.match}</span>
                                 </div>
                               </div>
                             ))}
@@ -403,13 +653,13 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
                           <div className="flex items-center justify-between font-extrabold text-amber-950">
                             <span className="flex items-center space-x-1">
                               <CreditCard className="w-3.5 h-3.5 text-amber-800" />
-                              <span>Transaction #{m.toolResult.data.orderId}</span>
+                              <span>{activeLocale.labels.transaction} #{m.toolResult.data.orderId}</span>
                             </span>
                             <span className="font-black text-emerald-800">{m.toolResult.data.amount}</span>
                           </div>
-                          <div className="p-1.5 bg-white rounded-lg border border-amber-200/80">
+                          <div className="p-2 bg-white rounded-lg border border-amber-200/80">
                             <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 text-[9px] font-black uppercase mb-1">
-                              ✓ {m.toolResult.data.escrowStatus}
+                              {m.toolResult.data.escrowStatus}
                             </span>
                             <p className="text-[10px] text-slate-700 font-medium">
                               {m.toolResult.data.timeline}
@@ -421,10 +671,10 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
                       {/* Workflow Steps Card */}
                       {m.toolResult.type === 'workflow' && (
                         <div className="bg-slate-100 rounded-xl p-2.5 border border-slate-300 text-slate-800 text-[10px] space-y-1">
-                          <span className="font-extrabold text-slate-900 block">KisanMitra 8-Step Transaction Flow:</span>
-                          <ol className="space-y-0.5 list-none font-medium text-slate-700">
-                            {m.toolResult.data.steps.map((st: string, sIdx: number) => (
-                              <li key={sIdx} className="bg-white p-1 rounded border border-slate-200/60">
+                          <span className="font-extrabold text-slate-900 block">{activeLocale.labels.workflowTitle}</span>
+                          <ol className="space-y-1 list-none font-medium text-slate-700">
+                            {(m.toolResult.data.steps || []).map((st: string, sIdx: number) => (
+                              <li key={sIdx} className="bg-white p-1.5 rounded border border-slate-200/70">
                                 {st}
                               </li>
                             ))}
@@ -435,8 +685,8 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
                       {/* Storage Locator Card */}
                       {m.toolResult.type === 'storage' && (
                         <div className="bg-teal-50 rounded-xl p-2.5 border border-teal-200 text-slate-800 text-[11px] space-y-1">
-                          <span className="font-extrabold text-teal-950 block">Nearby Storage Facilities:</span>
-                          {m.toolResult.data.facilities.map((f: any, fIdx: number) => (
+                          <span className="font-extrabold text-teal-950 block">{activeLocale.labels.storageTitle}</span>
+                          {(m.toolResult.data.facilities || []).map((f: any, fIdx: number) => (
                             <div key={fIdx} className="bg-white p-1.5 rounded-lg border border-teal-100 text-[10px] flex justify-between items-center">
                               <div>
                                 <span className="font-bold text-slate-900 block">{f.name}</span>
@@ -451,8 +701,8 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
                       {/* Transport Vehicles Card */}
                       {m.toolResult.type === 'transport' && (
                         <div className="bg-slate-100 rounded-xl p-2.5 border border-slate-300 text-slate-800 text-[11px] space-y-1">
-                          <span className="font-extrabold text-slate-900 block">Available Transport Carriers:</span>
-                          {m.toolResult.data.vehicles.map((v: any, vIdx: number) => (
+                          <span className="font-extrabold text-slate-900 block">{activeLocale.labels.transportTitle}</span>
+                          {(m.toolResult.data.vehicles || []).map((v: any, vIdx: number) => (
                             <div key={vIdx} className="bg-white p-1.5 rounded-lg border border-slate-200 text-[10px] flex justify-between items-center">
                               <div>
                                 <span className="font-bold text-slate-900 block">🚚 {v.name}</span>
@@ -469,14 +719,15 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
 
                   {/* Speech reader button */}
                   {m.sender === 'ai' && (
-                    <div className="mt-2 pt-1 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                    <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
                       <span>{m.timestamp}</span>
                       <button
                         onClick={() => handleSpeak(m.text)}
-                        className="flex items-center space-x-1 text-slate-500 hover:text-emerald-800 font-bold transition cursor-pointer"
+                        className="flex items-center space-x-1 px-2 py-0.5 bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-950 rounded-md font-bold transition cursor-pointer border border-slate-200"
+                        title="Listen to this message"
                       >
-                        <Volume2 className="w-3 h-3" />
-                        <span>Listen Voice</span>
+                        <Volume2 className="w-3 h-3 text-emerald-800" />
+                        <span>{activeLocale.listenVoice}</span>
                       </button>
                     </div>
                   )}
@@ -485,9 +736,9 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
             ))}
 
             {loading && (
-              <div className="flex items-center space-x-2 text-xs text-slate-500 bg-white p-3 rounded-2xl border border-slate-200 max-w-[60%]">
+              <div className="flex items-center space-x-2 text-xs text-slate-600 bg-white p-3 rounded-2xl border border-slate-200 max-w-[70%] shadow-2xs">
                 <RefreshCw className="w-4 h-4 animate-spin text-emerald-800" />
-                <span>Consulting AGMARKNET database...</span>
+                <span>{activeLocale.labels.consulting}</span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -506,8 +757,8 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Ask in Telugu, Hindi, or English..."
-                className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                placeholder={activeLocale.placeholder}
+                className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none placeholder:text-slate-400 font-medium"
               />
               <button
                 type="submit"

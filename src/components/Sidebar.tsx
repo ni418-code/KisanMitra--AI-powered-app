@@ -24,7 +24,6 @@ import {
   ChevronRight,
   Sparkles,
   Globe,
-  Home,
 } from 'lucide-react';
 
 export type AppView =
@@ -166,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div>
         <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
           <div
-            onClick={() => onNavigate('landing')}
+            onClick={() => onNavigate('dashboard')}
             className="flex items-center space-x-3 cursor-pointer group"
           >
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-700 to-teal-500 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
@@ -177,9 +176,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="flex items-center space-x-1.5">
                   <span className="text-lg font-black text-white tracking-tight">
                     Kisan<span className="text-emerald-400">Mitra</span>
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded bg-emerald-900/80 text-emerald-300 text-[9px] font-black uppercase">
-                    SIH
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400 font-medium">Agri Commerce Engine</p>
@@ -216,22 +212,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Main Navigation Items */}
         <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-thin scrollbar-thumb-slate-800">
-          
-          {/* Landing / Home Link */}
-          <button
-            onClick={() => onNavigate('landing')}
-            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-              currentView === 'landing'
-                ? 'bg-slate-800 text-white font-bold'
-                : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-            }`}
-          >
-            <Home className="w-4 h-4 text-slate-400 shrink-0" />
-            {!collapsed && <span>Home / Landing Page</span>}
-          </button>
-
-          <div className="my-1.5 border-t border-slate-800/60" />
-
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;

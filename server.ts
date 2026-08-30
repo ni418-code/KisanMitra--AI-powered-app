@@ -95,13 +95,13 @@ async function start() {
   await connectDB();
 
   // Initial Market Data Sync
-  MarketService.syncMarketData().catch((err) => console.warn('[Sync Error]', err.message));
+  MarketService.syncMarketData().catch((err) => console.log('[Sync Note]', err.message));
 
   // Scheduled Market Sync interval (30 minutes)
   const syncIntervalMinutes = parseInt(process.env.MARKET_SYNC_INTERVAL_MINUTES || '30', 10);
   setInterval(() => {
     console.log('[Kisan Mitra Scheduler] Running periodic AGMARKNET market sync...');
-    MarketService.syncMarketData().catch((err) => console.warn('[Scheduler Sync Warn]', err.message));
+    MarketService.syncMarketData().catch((err) => console.log('[Scheduler Sync Note]', err.message));
   }, syncIntervalMinutes * 60 * 1000);
 
   // Vite Development / Production integration

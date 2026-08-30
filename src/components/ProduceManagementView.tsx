@@ -426,36 +426,42 @@ export const ProduceManagementView: React.FC<ProduceManagementViewProps> = ({
               ) : matches.length === 0 ? (
                 <p className="text-xs text-slate-500 py-8 text-center">No active buyer requests currently matching this crop.</p>
               ) : (
-                matches.map((m) => (
-                  <div key={m.targetId} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 font-black text-xs rounded-full">
-                          {m.matchScore}% Match
-                        </span>
-                        <span className="font-extrabold text-slate-900 text-xs">{m.buyerName}</span>
+                (matches || []).map((m, idx) => {
+                  const reasonsList = Array.isArray(m.reasons)
+                    ? m.reasons
+                    : (m.explanation ? m.explanation.split(' • ') : ['Compatible crop specification']);
+
+                  return (
+                    <div key={m.targetId || idx} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 font-black text-xs rounded-full">
+                            {m.matchScore}% Match
+                          </span>
+                          <span className="font-extrabold text-slate-900 text-xs">{m.buyerName || 'Verified Buyer'}</span>
+                        </div>
+                        <span className="text-xs font-black text-slate-800">Offered: ₹{m.offeredPrice || m.buyerRequest?.targetPricePerKg || 0}/kg</span>
                       </div>
-                      <span className="text-xs font-black text-slate-800">Offered: ₹{m.offeredPrice}/kg</span>
-                    </div>
 
-                    <div className="grid grid-cols-5 gap-1.5 text-[10px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100 mb-2">
-                      <div>Crop: <span className="font-bold">{m.breakdown.cropScore}/40</span></div>
-                      <div>Loc: <span className="font-bold">{m.breakdown.locationScore}/20</span></div>
-                      <div>Qty: <span className="font-bold">{m.breakdown.quantityScore}/15</span></div>
-                      <div>Price: <span className="font-bold">{m.breakdown.priceScore}/15</span></div>
-                      <div>Avail: <span className="font-bold">{m.breakdown.availabilityScore}/10</span></div>
-                    </div>
+                      <div className="grid grid-cols-5 gap-1.5 text-[10px] text-slate-600 bg-white p-2 rounded-lg border border-slate-100 mb-2">
+                        <div>Crop: <span className="font-bold">{m.breakdown?.cropScore ?? m.breakdown?.cropMatch ?? 0}/40</span></div>
+                        <div>Loc: <span className="font-bold">{m.breakdown?.locationScore ?? m.breakdown?.locationMatch ?? 0}/20</span></div>
+                        <div>Qty: <span className="font-bold">{m.breakdown?.quantityScore ?? m.breakdown?.quantityMatch ?? 0}/15</span></div>
+                        <div>Price: <span className="font-bold">{m.breakdown?.priceScore ?? m.breakdown?.priceMatch ?? 0}/15</span></div>
+                        <div>Avail: <span className="font-bold">{m.breakdown?.availabilityScore ?? m.breakdown?.availabilityMatch ?? 0}/10</span></div>
+                      </div>
 
-                    <div className="space-y-1">
-                      {m.reasons.map((r, i) => (
-                        <p key={i} className="text-[11px] text-slate-600 flex items-center space-x-1">
-                          <CheckCircle className="w-3 h-3 text-emerald-600 shrink-0" />
-                          <span>{r}</span>
-                        </p>
-                      ))}
+                      <div className="space-y-1">
+                        {reasonsList.map((r, i) => (
+                          <p key={i} className="text-[11px] text-slate-600 flex items-center space-x-1">
+                            <CheckCircle className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>{r}</span>
+                          </p>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

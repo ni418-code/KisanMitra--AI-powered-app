@@ -14,24 +14,51 @@ import {
 } from 'lucide-react';
 
 const SAMPLE_PROMPTS = [
-  { text: 'Where should I sell 2,000 kg tomatoes today for highest net return?', lang: 'en' },
   { text: 'గుంటూరు మరియు హైదరాబాద్ మార్కెట్లలో నేటి టమాటా ధర ఎంత?', lang: 'te' },
+  { text: 'టమాటాల కొనుగోలుకు క్రియాశీల వ్యాపారులు లేదా కంపెనీలు ఎవరున్నారు?', lang: 'te' },
+  { text: 'ధాన్యం మరియు పత్తికి ప్రస్తుత అధికారిక ప్రభుత్వ MSP ఎంత?', lang: 'te' },
+  { text: 'గుంటూరు సమీపంలోని కోల్డ్ స్టోరేజ్ మరియు నిల్వ గోదాములు ఎక్కడ ఉన్నాయి?', lang: 'te' },
+  { text: 'गुंटूर मंडी में टमाटर का वर्तमान भाव और सिफारिश क्या है?', lang: 'hi' },
   { text: 'धान और कपास के लिए वर्तमान सरकारी एमएसपी क्या है?', lang: 'hi' },
+  { text: 'क्या टमाटर के लिए सत्यापित थोक खरीदार उपलब्ध हैं?', lang: 'hi' },
+  { text: 'Where should I sell 2,000 kg tomatoes today for highest net return?', lang: 'en' },
   { text: 'How do I protect tomato harvest from transit spoilage in hot weather?', lang: 'en' },
+  { text: 'What is the official MSP benchmark for Paddy and Cotton?', lang: 'en' },
 ];
 
 export const AIAssistantView: React.FC = () => {
   const { user, language, t } = useAuth();
+  const initialGreeting = language === 'te'
+    ? `నమస్కారం ${user?.name || 'కిసాన్ మిత్ర'}! నేను మీ AI అగ్రి సలహాదారుడిని. AGMARKNET లైవ్ మండి ధరలు, అధికారిక MSP మరియు లాజిస్టిక్స్ వివరాలు నా వద్ద ఉన్నాయి. తెలుగులోనే నన్ను ఏదైనా అడగండి!`
+    : language === 'hi'
+    ? `नमस्ते ${user?.name || 'किसान मित्र'}! मैं आपका AI कृषि सलाहकार हूँ। AGMARKNET लाइव मंडी भाव, सरकारी MSP और रसद जानकारी उपलब्ध है। मुझसे हिन्दी में कुछ भी पूछें!`
+    : `Namaste ${user?.name || 'Kisan Mitra'}! I am your AI Agri Advisor, grounded in real-time AGMARKNET mandi rates, official MSP schedules, and logistics intelligence. Ask me anything in Telugu, Hindi, or English!`;
+
   const [messages, setMessages] = useState<Array<{ sender: 'user' | 'ai'; text: string; sources?: string[]; timestamp: string }>>([
     {
       sender: 'ai',
-      text: `Namaste ${user?.name || 'Kisan Mitra'}! I am your AI Agri Advisor, grounded in real-time AGMARKNET mandi rates, official MSP schedules, and logistics intelligence. Ask me anything in Telugu, Hindi, Tamil, Kannada, Marathi, or English!`,
+      text: initialGreeting,
       sources: ['Government AGMARKNET', 'CACP Official MSP 2024-25'],
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Update greeting when language changes if no conversation yet
+  React.useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].sender === 'ai') {
+        return [{
+          sender: 'ai',
+          text: initialGreeting,
+          sources: ['Government AGMARKNET', 'CACP Official MSP 2024-25'],
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }];
+      }
+      return prev;
+    });
+  }, [language, initialGreeting]);
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputMessage).trim();
@@ -77,11 +104,17 @@ export const AIAssistantView: React.FC = () => {
         },
       ]);
     } else {
+      const errReply = language === 'te'
+        ? 'గుంటూరు మార్కెట్‌లో టమాటా ధర సుమారు ₹28/కేజీ. వరి ధాన్యం అధికారిక ప్రభుత్వ MSP ₹2,300/క్వింటాల్. దయచేసి కాసేపటి తర్వాత మళ్లీ అడగండి.'
+        : language === 'hi'
+        ? 'गुंटूर मंडी में टमाटर का भाव लगभग ₹28/किलो है तथा धान का सरकारी एमएसपी ₹2,300/क्विंटल है। कृपया थोड़ी देर बाद पुनः प्रयास करें।'
+        : 'Apologies, I encountered an issue consulting the agricultural database. Current Guntur tomato rates are ~₹28/kg and Paddy MSP is ₹2,300/qtl. Please ask again in a moment.';
+
       setMessages((prev) => [
         ...prev,
         {
           sender: 'ai',
-          text: 'Apologies, I encountered an issue consulting the agricultural database. Current Guntur tomato rates are ~₹28/kg and Paddy MSP is ₹2,300/qtl. Please ask again in a moment.',
+          text: errReply,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -91,8 +124,28 @@ export const AIAssistantView: React.FC = () => {
   const handleSpeak = (text: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+      const cleanText = text.replace(/[*#_`•]/g, '').trim();
+      const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.rate = 0.95;
+
+      const langMap: Record<string, string> = {
+        te: 'te-IN',
+        hi: 'hi-IN',
+        ta: 'ta-IN',
+        kn: 'kn-IN',
+        ml: 'ml-IN',
+        mr: 'mr-IN',
+        en: 'en-IN',
+      };
+      const targetLang = langMap[language] || 'te-IN';
+      utterance.lang = targetLang;
+
+      const voices = window.speechSynthesis.getVoices();
+      const matchedVoice = voices.find((v) => v.lang === targetLang || v.lang.startsWith(targetLang.split('-')[0]));
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
+      }
+
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -189,7 +242,7 @@ export const AIAssistantView: React.FC = () => {
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center">
             <Lightbulb className="w-3.5 h-3.5 mr-1 text-amber-500" /> Quick Questions:
           </span>
-          {SAMPLE_PROMPTS.map((prompt, i) => (
+          {SAMPLE_PROMPTS.filter(p => p.lang === language || (language !== 'te' && language !== 'hi' && p.lang === 'en')).map((prompt, i) => (
             <button
               key={i}
               onClick={() => handleSendMessage(prompt.text)}

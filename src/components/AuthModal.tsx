@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { UserRole } from '../types/index.ts';
 import { LanguageCode, getLocalizedCropName } from '../services/translations.ts';
+import { LANDING_PAGE_TRANSLATIONS } from '../services/landingPageTranslations.ts';
 import {
   X,
   Phone,
@@ -21,7 +22,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  initialRole?: 'farmer' | 'buyer';
+  initialRole?: UserRole;
   initialMode?: 'login' | 'register';
 }
 
@@ -33,18 +34,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode = 'login',
 }) => {
   const { loginWithOTP, requestOTP, switchDemoUser, language, setLanguage, t } = useAuth();
+  const lt = LANDING_PAGE_TRANSLATIONS[language] || LANDING_PAGE_TRANSLATIONS.en;
   
-  const [role, setRole] = useState<UserRole>(initialRole);
-  const [phone, setPhone] = useState('9876543210');
-  const [name, setName] = useState(initialRole === 'farmer' ? 'Ramesh Kumar' : 'Rajesh Agro Foods');
+  const role: UserRole = (initialRole as UserRole) || 'farmer';
+  const isFarmer = role === 'farmer';
+  const isBuyer = role === 'buyer';
+
+  const [phone, setPhone] = useState(isBuyer ? '9123456789' : '9876543210');
+  const [name, setName] = useState(isBuyer ? 'Rajesh Agro Foods Ltd' : 'Ramesh Kumar');
   const [state, setState] = useState('Andhra Pradesh');
   const [district, setDistrict] = useState('Guntur');
-  const [village, setVillage] = useState('Prathipadu');
+  const [village, setVillage] = useState(isBuyer ? 'Industrial Processing Zone' : 'Prathipadu');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'details' | 'otp'>('details');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'info' | 'error' | 'success' } | null>(null);
   const [demoCode, setDemoCode] = useState<string | null>(null);
+
+  // Sync state when initialRole changes
+  React.useEffect(() => {
+    if (initialRole === 'buyer') {
+      setName('Rajesh Agro Foods Ltd');
+      setPhone('9123456789');
+      setVillage('Industrial Processing Zone');
+    } else {
+      setName('Ramesh Kumar');
+      setPhone('9876543210');
+      setVillage('Prathipadu');
+    }
+    setStep('details');
+    setMessage(null);
+    setOtp('');
+  }, [initialRole, isOpen]);
 
   // Crop Preferences
   const availableCrops = ['Tomato', 'Chilli', 'Cotton', 'Paddy', 'Turmeric', 'Maize', 'Onion'];
@@ -119,28 +140,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
         
-        {/* Modal Header */}
-        <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white p-6 relative">
+        {/* Modal Header - Specialized for Role */}
+        <div className={`p-6 relative text-white ${
+          isFarmer
+            ? 'bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-900'
+            : 'bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950'
+        }`}>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-emerald-200 hover:text-white p-2 rounded-xl bg-emerald-950/40 transition cursor-pointer"
+            className="absolute top-4 right-4 text-slate-300 hover:text-white p-2 rounded-xl bg-black/30 transition cursor-pointer"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
           
           <div className="flex items-center space-x-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-400 text-emerald-950 flex items-center justify-center font-black shadow-md">
-              <Wheat className="w-6 h-6" />
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black shadow-md ${
+              isFarmer ? 'bg-amber-400 text-emerald-950' : 'bg-blue-500 text-white'
+            }`}>
+              {isFarmer ? <Wheat className="w-6 h-6" /> : <Building2 className="w-6 h-6" />}
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-xl font-black">Kisan<span className="text-amber-300">Mitra</span></h2>
-                <span className="px-2 py-0.5 rounded bg-emerald-700/80 text-emerald-100 text-[10px] font-black uppercase">
-                  SIH 2026
-                </span>
+                <h2 className="text-xl font-black">
+                  {isFarmer ? lt.authFarmerTitle : lt.authBuyerTitle}
+                </h2>
               </div>
-              <p className="text-xs text-emerald-200">
-                {step === 'details' ? 'Step 1: Role & Location Setup' : 'Step 2: Mobile OTP Verification'}
+              <p className="text-xs text-slate-200">
+                {isFarmer
+                  ? (step === 'details' ? lt.authFarmerSubtitle : lt.enterOtpTitle)
+                  : (step === 'details' ? lt.authBuyerSubtitle : lt.enterOtpTitle)}
               </p>
             </div>
           </div>
@@ -148,35 +177,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         <div className="p-6 max-h-[calc(85vh-100px)] overflow-y-auto space-y-5">
           
-          {/* Quick Demo Login Shortcut */}
-          <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-3.5 space-y-2">
-            <div className="flex items-center space-x-2 text-amber-900 font-extrabold text-xs">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>Instant 1-Click Demo Sandbox:</span>
+          {/* Quick Demo Login Shortcut - ONLY for the selected role */}
+          <div className={`rounded-2xl p-3.5 space-y-2 border ${
+            isFarmer ? 'bg-emerald-50/90 border-emerald-200' : 'bg-blue-50/90 border-blue-200'
+          }`}>
+            <div className={`flex items-center space-x-2 font-extrabold text-xs ${
+              isFarmer ? 'text-emerald-950' : 'text-blue-950'
+            }`}>
+              <Sparkles className={`w-4 h-4 ${isFarmer ? 'text-amber-600' : 'text-blue-600'}`} />
+              <span>
+                {isFarmer ? lt.demoFarmerLabel : lt.demoBuyerLabel}
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={async () => {
-                  await switchDemoUser('farmer');
-                  if (onSuccess) onSuccess();
-                  else onClose();
-                }}
-                className="p-2.5 bg-white hover:bg-emerald-50 text-emerald-950 font-bold text-xs rounded-xl border border-emerald-300 shadow-xs transition flex items-center justify-center space-x-2 cursor-pointer"
-              >
-                <span>🌾 Farmer (Ramesh)</span>
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await switchDemoUser('buyer');
-                  if (onSuccess) onSuccess();
-                  else onClose();
-                }}
-                className="p-2.5 bg-white hover:bg-blue-50 text-blue-950 font-bold text-xs rounded-xl border border-blue-300 shadow-xs transition flex items-center justify-center space-x-2 cursor-pointer"
-              >
-                <span>🏢 Buyer (Rajesh Agro)</span>
-              </button>
+
+            <div>
+              {isFarmer ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await switchDemoUser('farmer');
+                    if (onSuccess) onSuccess();
+                    else onClose();
+                  }}
+                  className="w-full p-3 bg-white hover:bg-emerald-100/60 text-emerald-950 font-black text-xs rounded-xl border border-emerald-300 shadow-xs transition flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <Wheat className="w-4 h-4 text-emerald-700" />
+                  <span>{lt.demoFarmerBtn}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await switchDemoUser('buyer');
+                    if (onSuccess) onSuccess();
+                    else onClose();
+                  }}
+                  className="w-full p-3 bg-white hover:bg-blue-100/60 text-blue-950 font-black text-xs rounded-xl border border-blue-300 shadow-xs transition flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <Building2 className="w-4 h-4 text-blue-700" />
+                  <span>{lt.demoBuyerBtn}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -196,67 +237,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {step === 'details' ? (
             <form onSubmit={handleSendOTP} className="space-y-4">
-              
-              {/* Role Selection */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  1. Choose User Role (రైతు / కొనుగోలుదారు)
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRole('farmer');
-                      if (!name) setName('Ramesh Kumar');
-                    }}
-                    className={`py-3 px-3 rounded-2xl border text-xs font-extrabold flex flex-col items-center justify-center space-y-1 transition cursor-pointer ${
-                      role === 'farmer'
-                        ? 'bg-emerald-800 text-white border-emerald-800 shadow-md shadow-emerald-950/20'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span className="text-base">🌾</span>
-                    <span>Farmer / FPO (రైతు)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRole('buyer');
-                      if (!name || name === 'Ramesh Kumar') setName('Rajesh Agro Processors');
-                    }}
-                    className={`py-3 px-3 rounded-2xl border text-xs font-extrabold flex flex-col items-center justify-center space-y-1 transition cursor-pointer ${
-                      role === 'buyer'
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-950/20'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span className="text-base">🏢</span>
-                    <span>Buyer / Mill (కొనుగోలుదారు)</span>
-                  </button>
-                </div>
-              </div>
 
               {/* Language Selection */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center space-x-1.5">
                   <Globe className="w-3.5 h-3.5 text-emerald-800" />
-                  <span>2. Preferred Language (భాషను ఎంచుకోండి)</span>
+                  <span>{lt.prefLangLabel}</span>
                 </label>
-                <div className="grid grid-cols-3 gap-1.5 text-xs">
+                <div className="grid grid-cols-4 gap-1.5 text-xs">
                   {[
                     { code: 'te', label: 'తెలుగు' },
-                    { code: 'en', label: 'English' },
                     { code: 'hi', label: 'हिन्दी' },
+                    { code: 'en', label: 'English' },
                     { code: 'ta', label: 'தமிழ்' },
                     { code: 'kn', label: 'ಕನ್ನಡ' },
+                    { code: 'ml', label: 'മലയാളം' },
                     { code: 'mr', label: 'मराठी' },
                   ].map((l) => (
                     <button
                       key={l.code}
                       type="button"
                       onClick={() => setLanguage(l.code as LanguageCode)}
-                      className={`py-1.5 px-2 rounded-xl border font-bold text-center transition cursor-pointer ${
+                      className={`py-1.5 px-2 rounded-xl border font-bold text-center transition cursor-pointer text-[11px] ${
                         language === l.code
                           ? 'bg-emerald-100 border-emerald-500 text-emerald-950 font-black'
                           : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -271,19 +273,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {/* Personal Details */}
               <div className="space-y-3 pt-1">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Full Name / Entity</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {isFarmer ? lt.farmerNameLabel : lt.buyerNameLabel}
+                  </label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your name"
+                    placeholder={isFarmer ? lt.farmerNamePlaceholder : lt.buyerNamePlaceholder}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Mobile Number (+91)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {isFarmer ? lt.farmerMobileLabel : lt.buyerMobileLabel}
+                  </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs font-bold">
                       +91
@@ -301,7 +307,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">District</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">{lt.districtLabel}</label>
                     <input
                       type="text"
                       value={district}
@@ -310,7 +316,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Village / Locality</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {isFarmer ? lt.farmerVillageLabel : lt.buyerVillageLabel}
+                    </label>
                     <input
                       type="text"
                       value={village}
@@ -324,7 +332,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {/* Crop Preferences */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  3. Select Crops of Interest
+                  {isFarmer ? lt.cropsGrownLabel : lt.cropsNeededLabel}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {availableCrops.map((c) => {
@@ -336,7 +344,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onClick={() => toggleCrop(c)}
                         className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
                           isSel
-                            ? 'bg-emerald-800 text-white border-emerald-800'
+                            ? (isFarmer ? 'bg-emerald-800 text-white border-emerald-800' : 'bg-blue-900 text-white border-blue-900')
                             : 'bg-slate-50 text-slate-700 border-slate-200'
                         }`}
                       >
@@ -350,9 +358,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-emerald-800 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm shadow-md transition cursor-pointer flex items-center justify-center space-x-2"
+                className={`w-full py-3 text-white rounded-2xl font-black text-sm shadow-md transition cursor-pointer flex items-center justify-center space-x-2 ${
+                  isFarmer
+                    ? 'bg-emerald-800 hover:bg-emerald-700'
+                    : 'bg-slate-900 hover:bg-slate-800'
+                }`}
               >
-                <span>{loading ? 'Sending OTP...' : 'Send Verification OTP →'}</span>
+                <span>{loading ? 'Sending OTP...' : (isFarmer ? lt.sendOtpFarmerBtn : lt.sendOtpBuyerBtn)}</span>
               </button>
             </form>
           ) : (
@@ -360,14 +372,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Enter 6-Digit OTP
+                    {lt.enterOtpTitle}
                   </label>
                   <button
                     type="button"
                     onClick={() => setStep('details')}
                     className="text-xs text-emerald-700 hover:underline font-semibold cursor-pointer"
                   >
-                    Edit Details
+                    {lt.editDetailsBtn}
                   </button>
                 </div>
                 <div className="relative">
@@ -390,9 +402,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-emerald-800 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm shadow-md transition cursor-pointer flex items-center justify-center space-x-2"
+                className={`w-full py-3 text-white rounded-2xl font-black text-sm shadow-md transition cursor-pointer flex items-center justify-center space-x-2 ${
+                  isFarmer
+                    ? 'bg-emerald-800 hover:bg-emerald-700'
+                    : 'bg-slate-900 hover:bg-slate-800'
+                }`}
               >
-                <span>{loading ? 'Verifying...' : 'Verify OTP & Enter KisanMitra'}</span>
+                <span>{loading ? 'Verifying...' : (isFarmer ? lt.verifyOtpFarmerBtn : lt.verifyOtpBuyerBtn)}</span>
                 <Check className="w-4 h-4" />
               </button>
             </form>
