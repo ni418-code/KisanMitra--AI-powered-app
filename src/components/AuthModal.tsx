@@ -219,6 +219,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
               )}
             </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                await switchDemoUser('admin');
+                if (onSuccess) onSuccess();
+                else onClose();
+              }}
+              className="w-full p-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl border border-slate-700 shadow-xs transition flex items-center justify-center space-x-2 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-400" />
+              <span>🔐 Admin Demo Controller (switch to admin)</span>
+            </button>
           </div>
 
           {message && (

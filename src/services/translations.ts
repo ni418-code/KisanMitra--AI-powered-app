@@ -22,6 +22,8 @@ export interface Translations {
   storage: string;
   profitCalculator: string;
   saleWindow: string;
+  escrow: string;
+  adminDemo: string;
   deals: string;
   messages: string;
   notifications: string;
@@ -112,6 +114,8 @@ export const TRANSLATIONS: Record<LanguageCode, Translations> = {
     storage: 'Storage Facilities',
     profitCalculator: 'Profit & Sale Window',
     saleWindow: 'Sale Window Analysis',
+    escrow: 'Secure Escrow',
+    adminDemo: 'Admin Demo Controller',
     deals: 'Smart Matching Engine',
     messages: 'Direct Chat',
     notifications: 'Notifications',
@@ -201,6 +205,8 @@ export const TRANSLATIONS: Record<LanguageCode, Translations> = {
     storage: 'కోల్డ్ స్టోరేజ్ & గిడ్డంగులు',
     profitCalculator: 'లాభం & అమ్మకపు సమయం',
     saleWindow: 'అమ్మకపు సమయ విశ్లేషణ',
+    escrow: 'సురక్షిత ఎస్క్రో',
+    adminDemo: 'అడ్మిన్ డెమో కంట్రోలర్',
     deals: 'స్మార్ట్ మ్యాచింగ్ ఇంజిన్',
     messages: 'ప్రత్యక్ష సంభాషణ (చాట్)',
     notifications: 'నోటిఫికేషన్లు',
@@ -290,6 +296,8 @@ export const TRANSLATIONS: Record<LanguageCode, Translations> = {
     storage: 'कोल्ड स्टोरेज व गोदाम',
     profitCalculator: 'मुनाफा व बिक्री समय',
     saleWindow: 'बिक्री समय विश्लेषण',
+    escrow: 'सुरक्षित एस्क्रो',
+    adminDemo: 'एडमिन डेमो नियंत्रक',
     deals: 'स्मार्ट मैचिंग इंजन',
     messages: 'सीधी चैट',
     notifications: 'सूचनाएं',
@@ -379,6 +387,8 @@ export const TRANSLATIONS: Record<LanguageCode, Translations> = {
     storage: 'குளிர்சாதன சேமிப்பு & கிடங்குகள்',
     profitCalculator: 'லாபம் & விற்பனை நேரம்',
     saleWindow: 'விற்பனை நேர பகுப்பாய்வு',
+    escrow: 'பாதுகாப்பான எஸ்க்ரோ',
+    adminDemo: 'நிர்வாக டெமோ கட்டுப்பாடு',
     deals: 'ஸ்மார்ட் பொருத்தம்',
     messages: 'நேரடி அரட்டை',
     notifications: 'அறிவிப்புகள்',
@@ -468,6 +478,8 @@ export const TRANSLATIONS: Record<LanguageCode, Translations> = {
     storage: 'ಕೋಲ್ಡ್ ಸ್ಟೋರೇಜ್ & ಗೋದಾಮು',
     profitCalculator: 'ಲಾಭ & ಮಾರಾಟ ಸಮಯ',
     saleWindow: 'ಮಾರಾಟ ಸಮಯ ವಿಶ್ಲೇಷಣೆ',
+    escrow: 'ಸುರಕ್ಷಿತ ಎಸ್ಕ್ರೋ',
+    adminDemo: 'ಆಡ್ಮಿನ್ ಡೆಮೊ ನಿಯಂತ್ರಕ',
     deals: 'ಸ್ಮಾರ್ಟ್ ಮ್ಯಾಚಿಂಗ್',
     messages: 'ನೇರ ಚಾಟ್',
     notifications: 'ಸೂಚನೆಗಳು',
@@ -557,6 +569,8 @@ export const TRANSLATIONS: Record<LanguageCode, Translations> = {
     storage: 'ശീതീകരണ സംഭരണശാലകൾ',
     profitCalculator: 'ലാഭവും വിൽപന സമയവും',
     saleWindow: 'വിൽപന സമയ വിശകലനം',
+    escrow: 'സുരക്ഷിത എസ്ക്രോ',
+    adminDemo: 'അഡ്മിൻ ഡെമോ കൺട്രോളർ',
     deals: 'സ്മാർട്ട് പൊരുത്തം',
     messages: 'ചാറ്റ്',
     notifications: 'അറിയിപ്പുകൾ',
@@ -646,6 +660,8 @@ export const TRANSLATIONS: Record<LanguageCode, Translations> = {
     storage: 'कोल्ड स्टोरेज आणि गोदामे',
     profitCalculator: 'नफा आणि विक्री वेळ',
     saleWindow: 'विक्री वेळ विश्लेषण',
+    escrow: 'सुरक्षित एस्क्रो',
+    adminDemo: 'अॅडमिन डेमो नियंत्रक',
     deals: 'स्मार्ट मॅचिंग इंजिन',
     messages: 'थेट चॅट',
     notifications: 'सूचना',

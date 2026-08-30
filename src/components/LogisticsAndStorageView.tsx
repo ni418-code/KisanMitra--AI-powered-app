@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
+import { api } from '../services/api.ts';
 import {
   Truck,
   Warehouse,
@@ -13,12 +14,15 @@ import {
   Sparkles,
   ArrowRight,
   Filter,
+  Loader2,
 } from 'lucide-react';
 
 export const LogisticsAndStorageView: React.FC = () => {
   const { user, language, t } = useAuth();
   const [activeTab, setActiveTab] = useState<'transport' | 'storage'>('transport');
-  
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [taskLoading, setTaskLoading] = useState(false);
+
   // Transport Booking Form States
   const [pickupLocation, setPickupLocation] = useState(
     user?.location?.village ? `${user.location.village}, ${user.location.district}` : 'Prathipadu Village, Guntur'
@@ -30,6 +34,18 @@ export const LogisticsAndStorageView: React.FC = () => {
   // Storage Request States
   const [storageCategory, setStorageCategory] = useState<'all' | 'cold' | 'dry'>('all');
   const [storageRequested, setStorageRequested] = useState<string | null>(null);
+
+  const fetchTasks = async () => {
+    setTaskLoading(true);
+    const res = await api.getLogisticsTasks();
+    if (res.success && res.data) setTasks(res.data.tasks || []);
+    setTaskLoading(false);
+    window.dispatchEvent(new Event('km-logistics-updated'));
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [user]);
 
   const vehicleOptions = [
     {
@@ -153,18 +169,48 @@ export const LogisticsAndStorageView: React.FC = () => {
     },
   ];
 
-  const handleBookTransport = (vehicle: any) => {
-    setBookedSuccess(`Transport booked successfully with ${vehicle.name}! Driver ${vehicle.driverName} has been assigned. OTP: 4892.`);
-    setTimeout(() => {
-      setBookedSuccess(null);
-    }, 6000);
+  const handleBookTransport = async (vehicle: any) => {
+    const res = await api.createLogisticsTask({
+      type: 'transport',
+      title: `${vehicle.name} — ${pickupLocation} → ${dropLocation}`,
+      reference: `Vehicle: ${vehicle.name} • Driver: ${vehicle.driverName}`,
+      driverName: vehicle.driverName,
+      vehicle: vehicle.name,
+      pickup: pickupLocation,
+      drop: dropLocation,
+    });
+    if (res.success && res.data?.task) {
+      setBookedSuccess(`Transport booked with ${vehicle.name}! Driver ${vehicle.driverName} assigned. This tracker stays visible until the driver completes the ride.`);
+      fetchTasks();
+    } else {
+      setBookedSuccess(`Booking recorded locally. ${res.message || ''}`);
+      fetchTasks();
+    }
   };
 
-  const handleRequestStorage = (facility: any) => {
-    setStorageRequested(`Storage space request submitted to ${facility.name}. Facility manager will contact you within 2 hours.`);
-    setTimeout(() => {
+  const handleRequestStorage = async (facility: any) => {
+    const res = await api.createLogisticsTask({
+      type: 'storage',
+      title: `${facility.name} — storage request`,
+      reference: `Facility: ${facility.name} • Rate: ${facility.rate}`,
+      facility: facility.name,
+    });
+    if (res.success && res.data?.task) {
+      setStorageRequested(`Storage request submitted to ${facility.name}. This tracker stays visible until your lot is stored successfully.`);
+      fetchTasks();
+    } else {
+      setStorageRequested(`Storage request recorded locally. ${res.message || ''}`);
+      fetchTasks();
+    }
+  };
+
+  const handleCompleteTask = async (task: any, status: 'stored' | 'completed') => {
+    const res = await api.updateLogisticsTaskStatus(task.id, status);
+    if (res.success) {
+      setBookedSuccess(null);
       setStorageRequested(null);
-    }, 6000);
+      fetchTasks();
+    }
   };
 
   const filteredStorage = storageFacilities.filter((f) => {
@@ -217,6 +263,46 @@ export const LogisticsAndStorageView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Persistent logistics/storage trackers (stay until completed/stored) */}
+      {tasks.filter((task) => task.status === 'active').length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-amber-600" />
+              <span>Active Logistics & Storage Trackers (stay until completed)</span>
+            </h2>
+            <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full">{tasks.filter((task) => task.status === 'active').length} Open</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {tasks.filter((task) => task.status === 'active').map((task) => (
+              <div key={task.id} className="bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${task.type === 'transport' ? 'bg-blue-100 text-blue-700' : 'bg-teal-100 text-teal-700'}`}>
+                      {task.type === 'transport' ? <Truck className="w-4 h-4" /> : <Warehouse className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-slate-900">{task.title}</p>
+                      <p className="text-[11px] text-slate-600 mt-0.5">{task.reference}</p>
+                      <p className="text-[11px] text-amber-900 font-bold mt-1">📌 Status: {task.type === 'transport' ? 'Driver assigned — ride not yet completed' : 'Storage request accepted — lot not yet stored'}</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-black rounded-full uppercase">Active</span>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => handleCompleteTask(task, task.type === 'transport' ? 'completed' : 'stored')}
+                    className="px-4 py-2 bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-sm"
+                  >
+                    {task.type === 'transport' ? 'Mark Ride Completed by Driver' : 'Mark Product Stored Successfully'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Success Alert Banner */}
       {bookedSuccess && (

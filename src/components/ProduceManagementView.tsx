@@ -84,6 +84,8 @@ export const ProduceManagementView: React.FC<ProduceManagementViewProps> = ({
       quantity: Number(quantity),
       unit,
       expectedPrice: Number(expectedPrice),
+      quality: qualityGrade,
+      grade: qualityGrade,
       qualityGrade,
       harvestDate,
       availableUntil: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
@@ -200,7 +202,7 @@ export const ProduceManagementView: React.FC<ProduceManagementViewProps> = ({
                   <div className="text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Variety & Grade:</span>
-                      <span className="font-bold text-slate-800">{prod.variety || 'Standard'} • {prod.qualityGrade}</span>
+                      <span className="font-bold text-slate-800">{prod.variety || 'Standard'} • {prod.quality || prod.qualityGrade || prod.grade}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Location:</span>

@@ -1,4 +1,4 @@
-import { User, Product, BuyerRequest, Offer, Order, Conversation, NotificationItem, PriceAlert } from '../../types/index.ts';
+import { User, Product, BuyerRequest, Offer, Order, Conversation, NotificationItem, PriceAlert, LogisticsTask } from '../../types/index.ts';
 
 // Pre-seeded authentic initial mock users for demo & seamless testing
 export const INITIAL_USERS: User[] = [
@@ -212,12 +212,19 @@ export const INITIAL_ORDERS: Order[] = [
       district: 'Hyderabad',
       address: 'Cold Storage Unit 3, Hyderabad',
     },
-    paymentStatus: 'escrow_held',
+    paymentStatus: 'pending',
     paymentMethod: 'Escrow Simulation (UPI / Bank)',
     shippingStatus: 'processing',
     orderStatus: 'processing',
-    trackingNotes: 'Farmer Ramesh packed 500kg lot. Transport scheduled via Kisan Mitra Logistics.',
+    trackingNotes: 'Order created. Buyer must deposit funds into KisanMitra Escrow to begin protected delivery.',
     estimatedDeliveryDate: '2026-08-28',
+    escrowStep: 'awaiting_deposit',
+    escrowStatus: '⏳ Awaiting Buyer Deposit',
+    deliveryMarked: false,
+    qualityVerified: false,
+    escrowHistory: [
+      { label: 'Order created with escrow protection', at: '2026-08-25T15:30:00.000Z' },
+    ],
     createdAt: '2026-08-25T15:30:00.000Z',
   }
 ];
@@ -364,6 +371,7 @@ class DataStore {
   conversations: Conversation[] = [...INITIAL_CONVERSATIONS];
   notifications: NotificationItem[] = [...INITIAL_NOTIFICATIONS];
   alerts: PriceAlert[] = [...INITIAL_ALERTS];
+  logisticsTasks: LogisticsTask[] = [];
 
   // Users
   getUserById(idOrUserId: string): User | undefined {
@@ -558,6 +566,30 @@ class DataStore {
     const initial = this.alerts.length;
     this.alerts = this.alerts.filter((a) => a.id !== id);
     return this.alerts.length < initial;
+  }
+
+  // Logistics & Storage Tasks
+  getLogisticsTasks(userId?: string): LogisticsTask[] {
+    if (!userId) return [...this.logisticsTasks];
+    return this.logisticsTasks.filter((task) => task.userWhoCreated === userId);
+  }
+
+  getLogisticsTaskById(id: string): LogisticsTask | undefined {
+    return this.logisticsTasks.find((task) => task.id === id);
+  }
+
+  addLogisticsTask(task: LogisticsTask): LogisticsTask {
+    this.logisticsTasks.unshift(task);
+    return task;
+  }
+
+  updateLogisticsTask(id: string, updates: Partial<LogisticsTask>): LogisticsTask | undefined {
+    const idx = this.logisticsTasks.findIndex((task) => task.id === id);
+    if (idx !== -1) {
+      this.logisticsTasks[idx] = { ...this.logisticsTasks[idx], ...updates, completedAt: updates.status === 'completed' || updates.status === 'stored' ? new Date().toISOString() : this.logisticsTasks[idx].completedAt };
+      return this.logisticsTasks[idx];
+    }
+    return undefined;
   }
 }
 

@@ -47,6 +47,7 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('price-desc');
   const [showNetCalculator, setShowNetCalculator] = useState(false);
+  const isFarmer = user?.role === 'farmer';
 
   // Net Return Calculator State
   const [calcCrop, setCalcCrop] = useState('Tomato');
@@ -134,13 +135,15 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setShowNetCalculator(!showNetCalculator)}
-              className="px-3.5 py-2.5 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold text-xs sm:text-sm rounded-xl shadow-md transition flex items-center space-x-2"
-            >
-              <Calculator className="w-4 h-4" />
-              <span>Net Return Calculator</span>
-            </button>
+            {isFarmer && (
+              <button
+                onClick={() => setShowNetCalculator(!showNetCalculator)}
+                className="px-3.5 py-2.5 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold text-xs sm:text-sm rounded-xl shadow-md transition flex items-center space-x-2"
+              >
+                <Calculator className="w-4 h-4" />
+                <span>Net Return Calculator</span>
+              </button>
+            )}
             <button
               onClick={handleTriggerSync}
               disabled={syncing}
@@ -153,8 +156,8 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
         </div>
       </div>
 
-      {/* Net Return Calculator Module (Rule 20) */}
-      {showNetCalculator && (
+      {/* Net Return Calculator Module (Rule 20) — Farmer only */}
+      {isFarmer && showNetCalculator && (
         <div className="bg-amber-50/90 border border-amber-300 rounded-2xl p-5 shadow-md animate-in fade-in duration-200">
           <div className="flex items-center justify-between border-b border-amber-200 pb-3 mb-4">
             <div className="flex items-center space-x-2">
@@ -349,9 +352,15 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
               Live data.gov.in Feed
             </span>
           </div>
-          <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-            Click any crop for 30-day interactive price trend chart
-          </span>
+          {isFarmer ? (
+            <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+              Click any crop for 30-day interactive price trend chart
+            </span>
+          ) : (
+            <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+              Official current market rates for transparent procurement
+            </span>
+          )}
         </div>
 
         {loading ? (
@@ -374,15 +383,15 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
                   <th className="py-3 px-4">Min - Max Price</th>
                   <th className="py-3 px-4">Modal Price (₹/qtl)</th>
                   <th className="py-3 px-4">Rate (₹/kg)</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  {isFarmer && <th className="py-3 px-4 text-right">Action</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {prices.map((price) => (
                   <tr
                     key={price.id}
-                    onClick={() => openCropDetailModal(price.cropName)}
-                    className="hover:bg-emerald-50/50 cursor-pointer transition"
+                    onClick={() => isFarmer && openCropDetailModal(price.cropName)}
+                    className={`hover:bg-emerald-50/50 transition ${isFarmer ? 'cursor-pointer' : ''}`}
                   >
                     <td className="py-3.5 px-4 font-extrabold text-slate-900">
                       <div className="flex items-center space-x-2">
@@ -415,18 +424,20 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
                       ₹{price.pricePerKg}/kg
                     </td>
 
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openCropDetailModal(price.cropName);
-                        }}
-                        className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold text-[11px] rounded-lg transition inline-flex items-center space-x-1"
-                      >
-                        <span>Charts</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
-                    </td>
+                    {isFarmer && (
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCropDetailModal(price.cropName);
+                          }}
+                          className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold text-[11px] rounded-lg transition inline-flex items-center space-x-1"
+                        >
+                          <span>Trends</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

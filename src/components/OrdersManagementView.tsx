@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../services/api.ts';
 import { Order } from '../types/index.ts';
+import { getLocalizedCropName } from '../services/translations.ts';
 import {
   ShoppingBag,
   Truck,
@@ -18,6 +19,7 @@ import {
 
 interface OrdersManagementViewProps {
   openChatModal?: (convId?: string) => void;
+  onOpenEscrow?: (orderId?: string) => void;
 }
 
 const SHIPPING_STAGES = [
@@ -30,8 +32,8 @@ const SHIPPING_STAGES = [
   'completed',
 ];
 
-export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ openChatModal }) => {
-  const { user, t } = useAuth();
+export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ openChatModal, onOpenEscrow }) => {
+  const { user, language, t } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -131,7 +133,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <span className="font-extrabold text-slate-900 text-sm">{ord.cropName}</span>
+                    <span className="font-extrabold text-slate-900 text-sm">{getLocalizedCropName(ord.cropName || ord.crop || 'Tomato', language)}</span>
                     <span className="text-xs text-slate-400 font-mono">#{ord.orderId}</span>
                   </div>
                   <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${
@@ -156,11 +158,19 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
                 <div className="flex items-center justify-between text-xs text-slate-500">
                   <span className="flex items-center space-x-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Escrow: <strong className="text-slate-800">{ord.paymentStatus}</strong></span>
+                    <span>Escrow: <strong className="text-slate-800">{ord.escrowStatus || ord.paymentStatus}</strong></span>
                   </span>
-                  <span className="text-emerald-700 font-bold flex items-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedOrder(ord);
+                      onOpenEscrow?.(ord.id);
+                    }}
+                    className="text-emerald-700 font-bold flex items-center hover:underline cursor-pointer"
+                    title="View payment status"
+                  >
                     Track Milestone <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-                  </span>
+                  </button>
                 </div>
               </div>
             ))
@@ -183,7 +193,7 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Created on {new Date(selectedOrder.createdAt).toLocaleString('en-IN')}
+                  {getLocalizedCropName(selectedOrder.cropName || selectedOrder.crop || 'Tomato', language)} • Created on {new Date(selectedOrder.createdAt).toLocaleString('en-IN')}
                 </p>
               </div>
 
@@ -261,35 +271,23 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
                   <div>
                     <h4 className="text-xs font-bold text-teal-950 uppercase">Escrow Settlement Mechanism</h4>
                     <p className="text-[11px] text-teal-900">
-                      Payment Status: <strong className="uppercase">{selectedOrder.paymentStatus}</strong>
+                      Escrow Status: <strong>{selectedOrder.escrowStatus || selectedOrder.paymentStatus}</strong>
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  {selectedOrder.paymentStatus === 'pending' && (
+                  {selectedOrder.escrowStep !== 'released' ? (
                     <button
-                      onClick={() => handleSimulatePayment(selectedOrder.id, 'deposit')}
+                      onClick={() => onOpenEscrow?.(selectedOrder.id)}
                       disabled={updatingStatus}
                       className="px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-lg shadow-sm"
                     >
-                      Deposit to Escrow
+                      Open Secure Escrow
                     </button>
-                  )}
-
-                  {selectedOrder.paymentStatus === 'escrow_funded' && (
-                    <button
-                      onClick={() => handleSimulatePayment(selectedOrder.id, 'release')}
-                      disabled={updatingStatus}
-                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg shadow-sm"
-                    >
-                      Release Payment to Farmer
-                    </button>
-                  )}
-
-                  {selectedOrder.paymentStatus === 'released' && (
+                  ) : (
                     <span className="px-3 py-1 bg-emerald-200 text-emerald-900 font-bold text-xs rounded-lg">
-                      Payment Settled in Farmer Account
+                      ✅ PAYMENT RELEASED
                     </span>
                   )}
                 </div>
