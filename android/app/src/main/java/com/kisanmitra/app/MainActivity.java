@@ -1,0 +1,5 @@
+package com.kisanmitra.app;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}
