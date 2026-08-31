@@ -18,25 +18,42 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createHttpServer(app);
 
+// Render injects PORT for web services. Keep a production fallback of 10000
+// and a developer-friendly 3000 fallback for local use.
+const PORT = Number(process.env.PORT) || (process.env.NODE_ENV === 'production' ? 10000 : 3000);
+
+// CORS can be restricted through CORS_ORIGIN. Leave it unset for the demo.
+const allowedOrigins = (process.env.CORS_ORIGIN || '*')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const corsOrigin = allowedOrigins.includes('*')
+  ? '*'
+  : (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Origin not allowed by CORS'));
+      }
+    };
+
 // Socket.IO Server Configuration
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: '*',
+    origin: corsOrigin,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   },
 });
 
-// Render injects a dynamic PORT env var; fall back to 3000 for local dev.
-const PORT = Number(process.env.PORT) || 3000;
-
 // Security & Parsing Middlewares
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health check endpoint
+// Health check endpoint — intentionally lightweight for Render readiness checks.
 app.get('/api/health', (_req, res) => {
-  res.json({
+  res.status(200).json({
     status: 'healthy',
     platform: 'Kisan Mitra Agri-Marketplace',
     timestamp: new Date().toISOString(),
@@ -51,7 +68,6 @@ app.use('/api', apiRoutes);
 io.on('connection', (socket) => {
   console.log(`[Socket.IO] Client connected: ${socket.id}`);
 
-  // Join user room for private notifications
   socket.on('join-user', (userId: string) => {
     if (userId) {
       socket.join(`user:${userId}`);
@@ -59,7 +75,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Join specific conversation/order room
   socket.on('join-conversation', (conversationId: string) => {
     if (conversationId) {
       socket.join(`conv:${conversationId}`);
@@ -67,10 +82,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle new message
   socket.on('send-message', (data: { conversationId: string; message: any }) => {
     if (data?.conversationId && data?.message) {
-      // Broadcast to room
       io.to(`conv:${data.conversationId}`).emit('new-message', {
         conversationId: data.conversationId,
         message: data.message,
@@ -78,7 +91,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Typing indicator
   socket.on('typing', (data: { conversationId: string; senderName: string; isTyping: boolean }) => {
     if (data?.conversationId) {
       socket.to(`conv:${data.conversationId}`).emit('typing-status', data);
@@ -90,22 +102,21 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start Server & Initialize Services
 async function start() {
-  // Connect DB
+  // Database is optional for the demo; connectDB() falls back immediately when
+  // MONGODB_URI is missing or unreachable, so Render can still bind its port.
   await connectDB();
 
-  // Initial Market Data Sync
+  // Initial market sync runs in the background and never blocks server startup.
   MarketService.syncMarketData().catch((err) => console.log('[Sync Note]', err.message));
 
-  // Scheduled Market Sync interval (30 minutes)
   const syncIntervalMinutes = parseInt(process.env.MARKET_SYNC_INTERVAL_MINUTES || '30', 10);
   setInterval(() => {
     console.log('[Kisan Mitra Scheduler] Running periodic AGMARKNET market sync...');
     MarketService.syncMarketData().catch((err) => console.log('[Scheduler Sync Note]', err.message));
-  }, syncIntervalMinutes * 60 * 1000);
+  }, Math.max(5, syncIntervalMinutes) * 60 * 1000);
 
-  // Vite Development / Production integration
+  // Vite development / production static integration
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
@@ -114,10 +125,10 @@ async function start() {
     });
     app.use(vite.middlewares);
   } else {
-    // Production static files
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+    const distPath = path.resolve(__dirname, 'dist');
+    app.use(express.static(distPath));
     app.get('*', (_req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
@@ -128,4 +139,5 @@ async function start() {
 
 start().catch((err) => {
   console.error('Fatal Server Boot Error:', err);
+  process.exitCode = 1;
 });
