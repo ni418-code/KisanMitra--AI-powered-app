@@ -1,24 +1,24 @@
-# Render Blueprint — deploy Kisan Mitra as a free web service.
-# Docs: https://render.com/docs/blueprint-spec
+# Render Blueprint — deploy Kisan Mitra as a free Node web service.
 services:
   - type: web
     name: kisan-mitra
     runtime: node
     plan: free
     buildCommand: npm install && npm run build
-    startCommand: npm run start
+    startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT        # Render injects this automatically; we bind to it.
-        sync: false
       - key: MONGODB_URI
-        sync: false      # Add your Atlas URI in the Render Dashboard (optional; app has an in-memory fallback).
+        sync: false      # Optional for the demo; app falls back to in-memory data.
       - key: GEMINI_API_KEY
-        sync: false      # Add your Gemini API key in the Dashboard for the AI assistant.
+        sync: false      # Optional; AI assistant uses fallback behavior when absent.
       - key: JWT_SECRET
         sync: false
       - key: DATA_GOV_IN_API_KEY
         sync: false
       - key: DATA_GOV_IN_RESOURCE_ID
+        sync: false
+      - key: CORS_ORIGIN
         sync: false
