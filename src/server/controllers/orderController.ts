@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { dataStore } from '../services/dataStore.ts';
+import { dataStore, persistEntity } from '../services/dataStore.ts';
 import { AuthenticatedRequest } from '../middleware/auth.ts';
 import { Order, OrderStatus, PaymentStatus, EscrowAction } from '../../types/index.ts';
 
@@ -214,6 +214,7 @@ export class OrderController {
           timestamp: new Date().toISOString(),
           isRead: true,
         });
+        persistEntity('conversations', conv);
       }
     }
 
@@ -387,28 +388,40 @@ export class OrderController {
 
     const { action = 'deposit' } = req.body; // 'deposit' | 'release'
 
-    if (action === 'deposit') {
-      order.paymentStatus = 'escrow_held';
-      order.escrowStep = 'funds_locked';
-      order.escrowStatus = '🔒 Funds Locked in Escrow';
-      order.trackingNotes = 'Payment simulated: Funds held safely in Kisan Mitra Escrow account.';
-      order.escrowHistory = [...(order.escrowHistory || []), { label: 'Buyer deposited funds into KisanMitra Escrow', at: new Date().toISOString() }];
-    } else if (action === 'release') {
-      order.paymentStatus = 'released';
-      order.escrowStep = 'released';
-      order.escrowStatus = '✅ PAYMENT RELEASED';
-      order.orderStatus = 'completed';
-      order.shippingStatus = 'completed';
-      order.deliveryMarked = true;
-      order.qualityVerified = true;
-      order.trackingNotes = `🎉 ₹${order.totalAmount.toLocaleString('en-IN')} payment released to farmer ${order.farmerName}.`;
-      order.escrowHistory = [...(order.escrowHistory || []), { label: 'Escrow payment released to farmer', at: new Date().toISOString() }];
-    }
+    const updates: Partial<Order> =
+      action === 'deposit'
+        ? {
+            paymentStatus: 'escrow_held',
+            escrowStep: 'funds_locked',
+            escrowStatus: '🔒 Funds Locked in Escrow',
+            trackingNotes: 'Payment simulated: Funds held safely in Kisan Mitra Escrow account.',
+            escrowHistory: [
+              ...(order.escrowHistory || []),
+              { label: 'Buyer deposited funds into KisanMitra Escrow', at: new Date().toISOString() },
+            ],
+          }
+        : {
+            paymentStatus: 'released',
+            escrowStep: 'released',
+            escrowStatus: '✅ PAYMENT RELEASED',
+            orderStatus: 'completed',
+            shippingStatus: 'completed',
+            deliveryMarked: true,
+            qualityVerified: true,
+            escrowReleasedAt: new Date().toISOString(),
+            trackingNotes: `🎉 ₹${order.totalAmount.toLocaleString('en-IN')} payment released to farmer ${order.farmerName}.`,
+            escrowHistory: [
+              ...(order.escrowHistory || []),
+              { label: 'Escrow payment released to farmer', at: new Date().toISOString() },
+            ],
+          };
+
+    const updated = dataStore.updateOrder(order.id, updates);
 
     res.json({
       success: true,
-      message: `Payment simulation successful: ${order.paymentStatus}`,
-      data: { order },
+      message: `Payment simulation successful: ${updated?.paymentStatus}`,
+      data: { order: updated },
     });
   }
 }

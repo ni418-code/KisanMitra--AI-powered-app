@@ -1,15 +1,23 @@
 {
-  "name": "react-example",
+  "name": "kisan-mitra",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Kisan Mitra \u2014 AI powered agri-marketplace connecting farmers, buyers and mandis.",
   "scripts": {
     "dev": "tsx server.ts",
     "start": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "test:api": "node scripts/smoke-test.mjs",
+    "test:ui": "node scripts/ui-smoke-test.mjs",
+    "test": "npm run lint && npm run test:api && npm run test:realtime && npm run test:ui",
+    "test:realtime": "node scripts/realtime-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
@@ -30,7 +38,7 @@
     "recharts": "^3.10.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
-    "vite": "^6.2.3"
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -39,8 +47,8 @@
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
+    "jsdom": "^26.0.0",
     "tailwindcss": "^4.1.14",
-    "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
   }

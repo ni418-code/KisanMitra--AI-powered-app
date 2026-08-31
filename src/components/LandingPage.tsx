@@ -30,6 +30,7 @@ import {
 interface LandingPageProps {
   onOpenAuth: (role?: 'farmer' | 'buyer', mode?: 'login' | 'register') => void;
   onExploreMandi: () => void;
+  onGoToDashboard?: () => void;
 }
 
 const CAROUSEL_SLIDES = [
@@ -72,8 +73,8 @@ const LIVE_TICKER_ITEMS = [
   { crop: 'Paddy (Rice)', mandi: 'Nizamabad, TS', price: '₹23.5/kg', modal: '₹2,350/qtl', change: '+1.1%'},
 ];
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuth, onExploreMandi }) => {
-  const { language, setLanguage, t, switchDemoUser } = useAuth();
+export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuth, onExploreMandi, onGoToDashboard }) => {
+  const { user, language, setLanguage, t, switchDemoUser } = useAuth();
   const lt = LANDING_PAGE_TRANSLATIONS[language] || LANDING_PAGE_TRANSLATIONS.en;
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -227,6 +228,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuth, onExploreM
               )}
             </div>
 
+            {/* Already signed in? Send them straight to the workspace */}
+            {user ? (
+              <button
+                onClick={() => onGoToDashboard?.()}
+                className="px-4.5 py-2 text-xs font-black text-white bg-emerald-800 hover:bg-emerald-700 rounded-xl shadow-md shadow-emerald-900/20 transition cursor-pointer flex items-center space-x-1.5"
+              >
+                <span>{lt.loginBtn === 'Sign In' ? 'Go to Dashboard' : t.dashboard}</span>
+                <ChevronRight className="w-3 h-3 text-emerald-200" />
+              </button>
+            ) : (
+            <>
             {/* Sign In Trigger */}
             <div className="relative">
               <button
@@ -309,9 +321,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuth, onExploreM
                       <div className="text-[10px] text-slate-500">{lt.buyerPortalDesc}</div>
                     </div>
                   </button>
+
+                  {/* One-click admin demo login (hackathon / investor demo) */}
+                  <button
+                    onClick={() => {
+                      setAuthDropdown(null);
+                      switchDemoUser('admin');
+                    }}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-slate-100 text-slate-800 text-xs font-bold flex items-center space-x-2 transition cursor-pointer mt-1 border-t border-slate-100 pt-2.5"
+                  >
+                    <Building2 className="w-4 h-4 text-slate-700 shrink-0" />
+                    <div>
+                      <div className="font-black text-slate-900">🔐 Admin Portal (Demo)</div>
+                      <div className="text-[10px] text-slate-500">One-click admin sign in</div>
+                    </div>
+                  </button>
                 </div>
               )}
             </div>
+            </>
+            )}
 
           </div>
 

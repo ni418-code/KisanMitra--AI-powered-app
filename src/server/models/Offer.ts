@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOfferDoc extends Document {
+  id: string;
   requestId?: string;
   productId?: string;
   buyerId: string;
@@ -21,6 +22,7 @@ export interface IOfferDoc extends Document {
 
 const OfferSchema = new Schema<IOfferDoc>(
   {
+    id: { type: String, required: true, unique: true, index: true },
     requestId: { type: String, index: true },
     productId: { type: String, index: true },
     buyerId: { type: String, required: true, index: true },
@@ -41,7 +43,7 @@ const OfferSchema = new Schema<IOfferDoc>(
     },
     initiator: { type: String, enum: ['buyer', 'farmer'], required: true },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 export const OfferModel = mongoose.models.Offer || mongoose.model<IOfferDoc>('Offer', OfferSchema);

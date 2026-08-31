@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { SocketProvider } from './context/SocketContext.tsx';
 import { Sidebar, AppView } from './components/Sidebar.tsx';
@@ -24,6 +24,7 @@ import { ProfileView } from './components/ProfileView.tsx';
 import { AdminPanelView } from './components/AdminPanelView.tsx';
 import { CropDetailModal } from './components/CropDetailModal.tsx';
 import { FloatingAIAssistant } from './components/FloatingAIAssistant.tsx';
+import { NotificationBell } from './components/NotificationBell.tsx';
 import { LogisticsStatusBanner } from './components/LogisticsStatusBanner.tsx';
 import { LanguageCode } from './services/translations.ts';
 import {
@@ -31,7 +32,7 @@ import {
   X,
   Search,
   Globe,
-  Bell,
+  BellRing,
   Sparkles,
   Wheat,
   Building2,
@@ -54,6 +55,21 @@ const MainApp: React.FC = () => {
 
   const isFarmer = user?.role === 'farmer';
   const isBuyer = user?.role === 'buyer';
+
+  // Keep the last authenticated user id so we can detect a session that was
+  // restored from localStorage (page refresh) or a fresh login.
+  const lastUserIdRef = useRef<string | null>(null);
+
+  // If a session already exists (or the user just signed in / used a demo
+  // login), drop them straight into their workspace instead of leaving them
+  // stranded on the marketing landing page.
+  useEffect(() => {
+    const currentId = user?.id ?? null;
+    if (currentId && currentId !== lastUserIdRef.current) {
+      setCurrentView(user?.role === 'admin' ? 'admin_panel' : 'dashboard');
+    }
+    lastUserIdRef.current = currentId;
+  }, [user]);
 
   const handleOpenAuth = (role: 'farmer' | 'buyer' = 'farmer', mode: 'login' | 'register' = 'login') => {
     setAuthModalRole(role);
@@ -115,6 +131,7 @@ const MainApp: React.FC = () => {
           <LandingPage
             onOpenAuth={handleOpenAuth}
             onExploreMandi={() => setCurrentView('market_prices')}
+            onGoToDashboard={() => setCurrentView(user?.role === 'admin' ? 'admin_panel' : 'dashboard')}
           />
           {/* Floating AI Assistant at bottom-right */}
           <FloatingAIAssistant onNavigateToView={(v) => setCurrentView(v as AppView)} />
@@ -223,9 +240,11 @@ const MainApp: React.FC = () => {
                   className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition cursor-pointer relative"
                   title="Price Alerts"
                 >
-                  <Bell className="w-4 h-4" />
-                  <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-1.5 right-1.5" />
+                  <BellRing className="w-4 h-4" />
                 </button>
+
+                {/* Live notification centre */}
+                <NotificationBell />
 
                 {/* User Avatar */}
                 <div

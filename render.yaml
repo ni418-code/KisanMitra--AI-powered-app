@@ -1,24 +1,35 @@
-# Render Blueprint — deploy Kisan Mitra as a free web service.
+# Render Blueprint — deploy Kisan Mitra as a web service.
 # Docs: https://render.com/docs/blueprint-spec
+#
+# Render → New → Blueprint → pick this repo. Everything below is pre-filled;
+# you only supply the secret values marked `sync: false` in the dashboard.
 services:
   - type: web
     name: kisan-mitra
     runtime: node
     plan: free
+    # Build the Vite bundle, then boot the single Express + Socket.IO server.
     buildCommand: npm install && npm run build
+    # `npm start` runs `tsx server.ts`, which serves /api, the socket server and
+    # the built dist/ on the PORT Render injects.
     startCommand: npm run start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT        # Render injects this automatically; we bind to it.
+      - key: NODE_VERSION
+        value: "22"
+      - key: PORT # Render injects this automatically; the server binds to it.
         sync: false
       - key: MONGODB_URI
-        sync: false      # Add your Atlas URI in the Render Dashboard (optional; app has an in-memory fallback).
+        sync: false # Optional. Atlas URI — omit and the app runs on its in-memory store.
       - key: GEMINI_API_KEY
-        sync: false      # Add your Gemini API key in the Dashboard for the AI assistant.
+        sync: false # Optional. Enables live Gemini answers in the AI assistant.
       - key: JWT_SECRET
-        sync: false
+        sync: false # openssl rand -hex 32 — keeps sessions alive across restarts.
+      - key: APP_URL
+        sync: false # e.g. https://kisan-mitra.onrender.com
       - key: DATA_GOV_IN_API_KEY
-        sync: false
+        sync: false # Optional. Enables live AGMARKNET price sync.
       - key: DATA_GOV_IN_RESOURCE_ID
-        sync: false
+        value: 9ef84268-d588-465a-a308-a864a43d0070

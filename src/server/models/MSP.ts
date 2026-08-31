@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMSPDoc extends Document {
+  id?: string;
   crop: string;
   category: string;
   season: 'Kharif' | 'Rabi' | 'Commercial' | 'Other';
@@ -15,6 +16,7 @@ export interface IMSPDoc extends Document {
 
 const MSPSchema = new Schema<IMSPDoc>(
   {
+    id: { type: String, index: true },
     crop: { type: String, required: true, unique: true, index: true },
     category: { type: String, required: true },
     season: { type: String, enum: ['Kharif', 'Rabi', 'Commercial', 'Other'], required: true },
@@ -26,7 +28,7 @@ const MSPSchema = new Schema<IMSPDoc>(
     effectiveDate: { type: String, default: '2024-10-01' },
     notes: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 export const MSPModel = mongoose.models.MSP || mongoose.model<IMSPDoc>('MSP', MSPSchema);

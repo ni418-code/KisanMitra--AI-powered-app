@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPriceAlertDoc extends Document {
+  id: string;
   userId: string;
   crop: string;
   targetPrice: number;
@@ -15,6 +16,7 @@ export interface IPriceAlertDoc extends Document {
 
 const PriceAlertSchema = new Schema<IPriceAlertDoc>(
   {
+    id: { type: String, required: true, unique: true, index: true },
     userId: { type: String, required: true, index: true },
     crop: { type: String, required: true, index: true },
     targetPrice: { type: Number, required: true },
@@ -25,7 +27,7 @@ const PriceAlertSchema = new Schema<IPriceAlertDoc>(
     triggeredCount: { type: Number, default: 0 },
     lastTriggeredAt: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 export const PriceAlertModel = mongoose.models.PriceAlert || mongoose.model<IPriceAlertDoc>('PriceAlert', PriceAlertSchema);

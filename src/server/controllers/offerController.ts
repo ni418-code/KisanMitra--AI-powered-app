@@ -248,7 +248,7 @@ export class OfferController {
       return;
     }
 
-    dataStore.offers = dataStore.offers.filter((o) => o.id !== offer.id);
+    dataStore.deleteOffer(offer.id);
 
     const otherUserId = offer.buyerId === req.user.id ? offer.farmerId : offer.buyerId;
     dataStore.addNotification({
@@ -284,8 +284,7 @@ export class OfferController {
       return;
     }
 
-    offer.status = 'rejected';
-    offer.updatedAt = new Date().toISOString();
+    const rejected = dataStore.updateOffer(offer.id, { status: 'rejected' }) || offer;
 
     const otherUserId = offer.buyerId === req.user.id ? offer.farmerId : offer.buyerId;
     dataStore.addNotification({
@@ -302,7 +301,7 @@ export class OfferController {
     res.json({
       success: true,
       message: 'Offer marked as rejected.',
-      data: { offer },
+      data: { offer: rejected },
     });
   }
 }

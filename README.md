@@ -1,149 +1,74 @@
-# 🌾 Kisan Mitra — Agri Marketplace (Smart India Hackathon Prototype)
+# 🌾 Kisan Mitra — AI-Powered Agri Marketplace
 
-Kisan Mitra is a **Progressive Web App (PWA)** that connects **Farmers, Buyers, and Markets** with:
+A full-stack **Progressive Web App** that connects **Farmers, Buyers and Mandis**:
 
-- Real-time AGMARKNET (data.gov.in) mandi prices
-- Official GoI MSP benchmarks & net-return calculator
-- Crop listings, buyer requirements, smart matching engine
-- Offer negotiation, orders, logistics & storage
-- 4-step secure **Escrow** payments
-- Real-time chat (Socket.IO) with notifications
-- Price alerts & grievances
-- Bulletins in **7 languages** (English, తెలుగు, हिन्दी, தமிழ், ಕನ್ನಡ, മലയാളം, मराठी)
-- Multilingual **AI assistant** "Kisan Mitra Sahayak" (Gemini)
-
----
-
-## 1. ✅ Fix for the "error while running on Render"
-
-### The bug
-The server hard‑coded its port:
-
-```ts
-// server.ts (BEFORE)
-const PORT = 3000;
-```
-
-Render injects a **dynamic `PORT` environment variable** for every web service. Because the app ignored it and tried to bind to `3000`, Render could not reach the app and the deployment errored out / health checks failed.
-
-### The fix (already applied)
-The server now reads the port from the environment, falling back to `3000` only for local development:
-
-```ts
-// server.ts (AFTER)
-// Render injects a dynamic PORT env var; fall back to 3000 for local dev.
-const PORT = Number(process.env.PORT) || 3000;
-```
-
-That is the exact change that makes the app work on Render. I verified it by starting the server with `PORT=8080` and confirming it binds to `8080`.
+- Live AGMARKNET (data.gov.in) mandi prices + 30-day trends
+- Official GoI **MSP** benchmarks and a net-return / best-market calculator
+- Produce listings, buyer requirements and a **smart matching engine**
+- Offer negotiation → orders → logistics → **4-step secure Escrow**
+- **Real-time chat** and push notifications over Socket.IO
+- Price alerts, grievances and an admin console
+- Multilingual **AI assistant** "Kisan Mitra Sahayak" (Gemini) in 7 languages
+- Installable PWA (Android/iOS) + a ready-to-build Capacitor Android project
 
 ---
 
-## 2. 🚀 How to deploy on Render (free)
+## ⚠️ First: rotate your secrets
 
-1. Push this repo to GitHub.
-2. In Render → **New → Web Service**, pick the repo.
-3. Set:
-   - **Name:** `kisan-mitra`
-   - **Runtime:** Node
-   - **Build command:** `npm install && npm run build`
-   - **Start command:** `npm run start`
-   - **Instance type:** Free
-4. Add the environment variables (from [`.env.example`](./.env.example)):
-   - `GEMINI_API_KEY` — for the AI assistant
-   - `JWT_SECRET` — any random string
-   - `DATA_GOV_IN_API_KEY` + `DATA_GOV_IN_RESOURCE_ID` — for live mandi data
-   - `MONGODB_URI` — *optional*. If MongoDB Atlas is not whitelisted, the app automatically falls back to a built‑in in‑memory data store, so it still works fully.
-   - `CORS_ORIGIN` — your app URL
-5. Deploy. The app serves on `https://your-app.onrender.com`.
+Earlier revisions of this repo committed **real credentials** in `.env.example`
+and in the server source. They have been removed from the tracked files, but
+**they are still visible in the git history** — treat them as compromised and
+rotate them now:
 
-A [`render.yaml`](./render.yaml) blueprint is included if you prefer "New → Blueprint".
+| Secret | Where to rotate | Used for |
+|---|---|---|
+| `MONGODB_URI` | Atlas → Database Access → change password | Optional persistence |
+| `GEMINI_API_KEY` | https://aistudio.google.com/apikey | AI assistant |
+| `JWT_SECRET` | generate a new one: `openssl rand -hex 32` | Login tokens |
+| `DATA_GOV_IN_API_KEY` | https://data.gov.in → My Account | Live mandi prices |
 
-> ⚠️ **Note:** Do **not** set `PORT` manually — Render provides it automatically, and the app now uses it.
+Every one of them is **optional** — the app boots and runs fully without any of
+them (see "Graceful degradation" below).
 
 ---
 
-## 3. 📱 Convert to a mobile app (no App Store / Google Play, 100% free)
-
-Kisan Mitra is now a full **PWA**. That means it can be installed on a phone **like a native app**, without any app store, subscription, or payment.
-
-### iPhone (iOS) — free, no App Store
-1. Open the live URL in **Safari**.
-2. Tap the **Share** button (square with an arrow).
-3. Tap **Add to Home Screen**.
-4. Tap **Add**. A Kisan Mitra app icon appears on your home screen and opens full‑screen, standalone.
-
-> iOS does **not** run `.apk` files — this is the correct, free app experience for iPhone.
-
-### Android — free, no Play Store
-- **Option A (recommended, 2 taps):** Open the URL in **Chrome → ⋮ menu → Add to Home screen → Install**. The app installs as a standalone app with its own icon (because of the service worker + manifest).
-- **Option B (sideload, fine for judging):** Generate an APK below.
-
-### Why it's installable now
-Added a web‑app manifest, service worker, icons, and meta tags:
-- `public/manifest.webmanifest`
-- `public/sw.js` (offline app‑shell caching; API calls always network‑first)
-- `public/icons/*` + `public/og-image.jpg`
-- PWA tags in [`index.html`](./index.html)
-
----
-
-## 4. 🤖 Build an APK (Android, free, no Play Console)
-
-> ⚠️ **The `.apk` binary cannot be compiled inside this AI Studio sandbox.** The sandbox has **no Java, no Android SDK, and no internet access to Google/Gradle/Maven hosts** (only the npm registry is reachable), so a real APK cannot be built here. The **entire Android project is already generated for you** in the [`android/`](./android) folder — building the actual `.apk` is **one command away on your own computer** (which has internet + Android Studio).
-
-### Crucial: point the app at your backend
-The web app calls the API at the **same origin** (`/api`). Inside an APK there is no built‑in server, so you must tell the build where the backend lives before building:
+## 1. Quick start
 
 ```bash
-VITE_API_BASE_URL="https://your-app.onrender.com" npm run build   # web deploy NOT needed
-```
-
-This bakes your deployed Render URL into the app so the APK can reach the live API (market prices, chat, orders, etc.). Without it the APK would only show an empty UI. I verified the variable is correctly baked into the bundle.
-
-> **If you haven't deployed yet:** you can still build the APK and simply point `VITE_API_BASE_URL` to your own machine later — but for a working demo, deploy to Render first (Step 2).
-
-### Option A — PWABuilder (fastest, zero code, recommended for judging)
-1. Go to **https://www.pwabuilder.com**
-2. Enter your deployed URL (e.g. `https://your-app.onrender.com`) → **Start**.
-3. It validates the manifest/service worker. Choose **Android → Generate package**.
-4. Download the **`.apk`** (or `.aab`). This uses a Trusted Web Activity — the app is just your website wrapped as an installable app.
-5. Transfer the APK to your Android phone and allow **"Install from unknown sources"** to sideload it for the demo.
-
-### Option B — Capacitor (full native wrapper) — project already generated ✅
-The Capacitor Android project is **already built** in this repo:
-- `android/` — complete Gradle Android project, `com.kisanmitra.app`, versionName `1.0`
-- Branded launcher icons (KisanMitra logo) at all densities
-- Web assets (built `dist/`) already copied into `android/app/src/main/assets/public`
-- Gradle wrapper (`gradlew`) bundled — you don't download Gradle separately
-
-On **your machine** (with Android Studio installed):
-
-```bash
-# 1. install deps + set the backend URL
 npm install
-VITE_API_BASE_URL="https://your-app.onrender.com" npm run build
-
-# 2. sync the fresh web build into Android
-npx cap sync android
-
-# 3. build the APK (debug = installable on any phone)
-cd android
-./gradlew assembleDebug
-# output: android/app/build/outputs/apk/debug/app-debug.apk
+cp .env.example .env      # optional — add your own keys
+npm run dev               # http://localhost:3000
 ```
 
-Or in Android Studio: **`npx cap open android`** → **Build → Build APK(s)** → the APK appears in the output folder.
+The single Express server serves the Vite dev middleware, the REST API under
+`/api` and the Socket.IO endpoint — so the frontend never needs a separate port.
 
-Sideload it: copy `app-debug.apk` to your phone, allow **"Install from unknown sources"**, and install.
+### Scripts
 
-> Java JDK 17+ and the Android SDK are required only on **your** machine. The [`android/`](./android) project here is the exact starting point.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server with HMR (Vite middleware) |
+| `npm run build` | Production bundle → `dist/` |
+| `npm start` | Serve the built app + API (reads `process.env.PORT`) |
+| `npm run lint` | TypeScript type-check (`tsc --noEmit`) |
+| `npm run test:api` | 54-check end-to-end REST smoke test |
+| `npm run test:realtime` | Socket.IO chat / notification / typing test |
+| `npm run test:ui` | Renders every view for every role in jsdom and fails on any console error |
+| `npm test` | lint + all three suites |
+
+The test suites expect the server to already be running:
+
+```bash
+npm run dev                       # terminal 1
+npm test                          # terminal 2
+# or point them elsewhere:  node scripts/smoke-test.mjs https://your-app.onrender.com
+```
 
 ---
 
-## 5. 🧑‍🎓 Demo logins (no sign‑up needed)
+## 2. Demo logins
 
-Use the **"Sign In" → role dropdown**, or the one‑click demo login buttons on the landing page:
+One-click from the landing page, or `POST /api/auth/demo-login { role }`:
 
 | Role | Name | Phone | OTP |
 |------|------|-------|-----|
@@ -151,79 +76,168 @@ Use the **"Sign In" → role dropdown**, or the one‑click demo login buttons o
 | 🏢 Buyer | Rajesh Agro Foods Ltd | `9123456780` | `123456` |
 | 🔐 Admin | Kisan Mitra Admin | `9999999999` | `123456` |
 
-Any phone number also works — request an OTP and the code is shown on screen / in the server log.
+Any other phone number works too — request an OTP and the code is returned in
+the API response and printed in the server log.
 
 ---
 
-## 6. 🛠️ Local development
+## 3. Environment variables
 
-```bash
-npm install          # install dependencies
-npm run dev          # start dev server (http://localhost:3000)
-npm run build        # production build to /dist
-npm run start        # run the built app (reads process.env.PORT)
-npm run lint         # TypeScript type-check
+Copy `.env.example` → `.env`. **Never commit `.env`** (already gitignored).
+
+| Variable | Required | Fallback when missing |
+|---|---|---|
+| `PORT` | No (hosting platforms inject it) | `3000` |
+| `NODE_ENV` | Set to `production` when deploying | dev mode |
+| `MONGODB_URI` | No | In-memory store (data resets on restart) |
+| `GEMINI_API_KEY` | No | Grounded offline knowledge engine answers |
+| `JWT_SECRET` | No | Random per-boot secret (sessions reset on restart) |
+| `DATA_GOV_IN_API_KEY` | No | Verified AGMARKNET baseline data set |
+| `DATA_GOV_IN_RESOURCE_ID` | No | AGMARKNET daily arrivals resource |
+| `MARKET_SYNC_INTERVAL_MINUTES` | No | `30` |
+| `APP_URL`, `CORS_ORIGIN` | No | Public URL / permissive CORS |
+| `VITE_API_BASE_URL` | Only for the Android APK | Same-origin `/api` |
+
+---
+
+## 4. Architecture — how the files connect
+
+```
+server.ts                     Express + Socket.IO entry point
+├── src/server/routes/api.ts  All REST routes (mounted at /api)
+│   └── controllers/*         One per domain (auth, market, product, offer, order…)
+│       └── services/*
+│           ├── dataStore.ts        In-memory store (single source of truth)
+│           ├── persistence.ts      Mirrors it to MongoDB when connected
+│           ├── realtimeBus.ts      Pushes socket events from controllers
+│           ├── marketService.ts    AGMARKNET sync + price queries
+│           ├── mspService.ts       Official MSP reference data
+│           ├── matchingEngine.ts   Farmer ↔ buyer match scoring
+│           ├── recommendationService.ts  Net-return / best-market maths
+│           └── aiService.ts        Gemini + grounded fallback answers
+│       └── models/*          Mongoose schemas (used by persistence.ts)
+├── src/context/AuthContext   Session, JWT, language/i18n
+├── src/context/SocketContext Single Socket.IO connection for the whole app
+├── src/services/api.ts       Typed REST client (same-origin /api by default)
+└── src/components/*          30+ views, all reading through services/api.ts
 ```
 
-Environment variables live in `.env` (copy from `.env.example`).
+**Data flow:** React view → `services/api.ts` → Express route → controller →
+`dataStore` → (optional) MongoDB mirror + Socket.IO push → other clients.
+
+### Graceful degradation
+
+The platform is designed so a missing dependency never breaks a request:
+
+| Missing | Result |
+|---|---|
+| MongoDB | In-memory store; data resets on restart |
+| Gemini key | Assistant answers from the built-in grounded knowledge base |
+| data.gov.in key | Verified AGMARKNET baseline prices |
+| Socket.IO | Chat/notifications fall back to HTTP polling |
+
+### MongoDB persistence
+
+When `MONGODB_URI` is set **and reachable**, the app:
+
+1. **hydrates** the in-memory store from the database on boot (a collection is
+   only replaced when it actually has documents, so the demo seed data survives
+   on an empty cluster), and
+2. **mirrors every write** back (fire-and-forget, never blocks a request),
+3. **flushes** on `SIGTERM`/`SIGINT` so graceful deploys don't lose state.
+
+If the connection drops, everything silently falls back to memory.
 
 ---
 
-## 7. 📂 Tech stack
+## 5. Deploy to Render (free)
 
-- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, Lucide icons, Recharts, Framer Motion
-- **Backend:** Express, Socket.IO
-- **Data:** In‑memory store with MongoDB Atlas fallback (best‑effort)
-- **AI:** Google Gemini (`@google/genai`)
-- **PWA:** Web App Manifest + Service Worker
+1. Push this repo to GitHub.
+2. Render → **New → Blueprint** → pick the repo (it reads `render.yaml`), or
+   create a **Web Service** manually with:
+   - **Build command:** `npm install && npm run build`
+   - **Start command:** `npm run start`
+   - **Health check path:** `/api/health`
+3. Add the environment variables from the table above (all optional).
+4. Deploy → `https://<your-service>.onrender.com`.
 
----
+> `tsx` is a runtime dependency precisely so `npm run start` keeps working even
+> on hosts that install with `--omit=dev`. Do **not** set `PORT` yourself —
+> Render injects it and the server binds to it.
 
-## 8. ❓ A note on "Notetaker / LinkedIn" files
-
-I searched the whole repository for any files named or referencing **"Notetaker"**, **"LinkedIn"**, **"notetake"**, etc. — **none exist** in this project. This repo is the Kisan Mitra agri‑marketplace only. If you were expecting different files (from a separate project), they are not present here; let me know and I can look into the correct repository.
-
----
-
-## 9. ✅ Verification performed (all passed)
-
-**Build & types**
-- `tsc --noEmit` — **0 type errors**
-- `npm run build` — **builds successfully**, PWA assets copied to `dist/`
-
-**Server**
-- Boots and now respects `process.env.PORT` (verified by booting with `PORT=8080`)
-- Health, market prices, MSP, AI chat, products, buyer requests, offers, orders, conversations, alerts, logistics, notifications, and admin endpoints all return valid JSON
-
-**Full end-to-end API smoke test (every functional variable present)**
-- Demo login for farmer / buyer / admin → valid JWT
-- Public endpoints: `/api/health`, `/markets/prices`, `/markets/crops/:crop`, `/markets/msp`, `/markets/net-return`, `/products`, `/buyer-requests`, `/ai/chat` — all `success: true`
-- Auth endpoints: `/auth/me`, `/offers`, `/orders`, `/conversations`, `/alerts`, `/notifications`, `/logistics` — all `success: true`
-- Admin endpoints: `/admin/stats`, `/admin/users`, `/admin/disputes` — all `success: true`
-- Matching: `/products/:id/matching-requests`, `/buyer-requests/:id/matching-farmers` — return matches
-- **Full transaction flow**: create buyer request → create produce → create offer → buyer accepts offer (auto‑creates order + conversation) → escrow `deposit` → `mark_delivered` → `verify_quality` → `release` (payment status → `released`) ✅
-- Chat message send, price‑alert create/toggle, logistics task create/status — all `success: true`
-
-**PWA / mobile**
-- Manifest, service worker, app icons, OG image all served with HTTP 200
-- `VITE_API_BASE_URL` correctly baked into the bundle when set (defaults to same‑origin `/api`)
-- Capacitor Android project generated with branded launcher icons and web assets synced
+Any Node host works the same way (Railway, Fly.io, VPS…): build with
+`npm run build`, start with `npm start`, bind `$PORT`.
 
 ---
 
-## 10. 🙋 What I need from you (to finish the APK)
+## 6. Install as a mobile app (no store, 100% free)
 
-Sandbox can't reach Android build servers, so the compile step happens on **your** machine. Please confirm/provide:
+Kisan Mitra is a PWA: `public/manifest.webmanifest`, `public/sw.js` and app
+icons are served from the same origin.
 
-1. **Deployed Render URL** — have you deployed Kisan Mitra to Render yet? If yes, paste the URL (e.g. `https://xxxx.onrender.com`). If not, I can walk you through the Render deploy (Section 2).
-2. **Do you have Android Studio installed, or would you prefer the zero‑code PWABuilder route?** (PWABuilder needs no install; Capacitor needs Android Studio.)
-3. **Wanted APK format:** debug APK is fine to sideload for a hackathon demo (no signing needed). If you need a **release/signed** APK, you'll set up a keystore on your machine (I can provide the commands).
+- **Android — Chrome:** ⋮ → *Add to Home screen* → *Install*
+- **iPhone — Safari:** Share → *Add to Home Screen*
 
-With options 1–3 answered, you (or I, if given your machine's environment) can run the one command to produce `.apk`:
+### Build an APK
+
+The Capacitor Android project is already generated in `android/`:
 
 ```bash
-VITE_API_BASE_URL="https://your-app.onrender.com" npm run build \
-  && npx cap sync android \
-  && (cd android && ./gradlew assembleDebug)
+VITE_API_BASE_URL="https://your-app.onrender.com" npm run build
+npx cap sync android
+cd android && ./gradlew assembleDebug
 # → android/app/build/outputs/apk/debug/app-debug.apk
 ```
+
+`VITE_API_BASE_URL` is what lets the APK reach your deployed API — without it
+the app would only show an empty UI. Zero-install alternative: paste your URL
+into **https://www.pwabuilder.com** and download the generated package.
+
+---
+
+## 7. Tech stack
+
+React 19 · TypeScript · Vite 6 · Tailwind CSS 4 · Socket.IO · Express 4 ·
+Mongoose 9 · Google Gemini (`@google/genai`) · Recharts · Lucide · jsdom tests
+
+---
+
+## 8. What was fixed in this pass
+
+- **Session restore:** a logged-in user who refreshed the page was stranded on
+  the marketing landing page with no way into the workspace; the app now lands
+  them on their dashboard (admin → admin console) and the landing header shows
+  a *Go to Dashboard* button.
+- **Real-time actually reaches the UI:** the server now pushes `new-message` and
+  `notification` events (previously only client-emitted echoes worked), and a new
+  `NotificationBell` component in the header consumes them.
+- **MongoDB was decorative:** 11 Mongoose models existed but only one was used.
+  Added a persistence bridge (`src/server/services/persistence.ts`) that
+  hydrates on boot, mirrors writes and flushes on shutdown.
+- **Order schema data loss:** the Mongoose `Order` schema declared neither the
+  4-step escrow fields nor the `released` / `escrow_funded` payment states, so
+  those fields were silently stripped on save. Fixed, and schemas are now
+  `strict: false` so future app-side fields survive a round-trip.
+- **Write paths that bypassed the store:** `simulatePayment`, `rejectOffer`,
+  `deleteOffer`, `toggleAlert` and `sendMessage` mutated objects in place
+  instead of going through `dataStore`, so they would never have persisted.
+  All now route through the store.
+- **Committed credentials removed** from `.env.example`, `config/db.ts`,
+  `middleware/auth.ts` and `services/marketService.ts` (see §0).
+- **Boot time:** removing the always-attempted Atlas connection and the
+  data.gov.in fetch when unconfigured cut cold start from ~17s to ~2s.
+- **Dead code removed:** `components/Navbar.tsx` and `components/BottomNav.tsx`
+  were not imported anywhere.
+- **Crash hardening:** `scrollIntoView` is now feature-detected.
+- **`tsx` moved to `dependencies`** so `npm run start` works on hosts that skip
+  devDependencies; added `engines.node >= 20`; named the package properly.
+- Added `scripts/smoke-test.mjs` (54 checks), `scripts/realtime-test.mjs` and
+  `scripts/ui-smoke-test.mjs` (renders all 39 role/view combinations).
+
+### Known limitations
+
+- The MongoDB path could not be integration-tested here (Atlas is unreachable
+  from the build sandbox); it is best-effort and fails open to memory.
+- Produce listings support add / delete / mark-sold from the UI; there is no
+  edit form yet (the `PUT /api/products/:id` endpoint exists and is tested).
+- Payments are a simulated escrow flow — no real payment gateway.

@@ -11,6 +11,7 @@ export interface IMessageSubDoc {
 }
 
 export interface IConversationDoc extends Document {
+  id: string;
   orderId?: string;
   buyerRequestId?: string;
   buyerId: string;
@@ -41,6 +42,7 @@ const MessageSubSchema = new Schema(
 
 const ConversationSchema = new Schema<IConversationDoc>(
   {
+    id: { type: String, required: true, unique: true, index: true },
     orderId: { type: String, index: true },
     buyerRequestId: { type: String, index: true },
     buyerId: { type: String, required: true, index: true },
@@ -53,7 +55,7 @@ const ConversationSchema = new Schema<IConversationDoc>(
     lastMessage: { type: String },
     lastMessageAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 export const ConversationModel = mongoose.models.Conversation || mongoose.model<IConversationDoc>('Conversation', ConversationSchema);

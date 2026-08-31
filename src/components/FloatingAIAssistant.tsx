@@ -198,7 +198,9 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
   }, [language, activeLocale.greeting]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {

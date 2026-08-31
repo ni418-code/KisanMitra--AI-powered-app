@@ -3,9 +3,16 @@ import mongoose from 'mongoose';
 let isConnected = false;
 
 export async function connectDB() {
-  const uri = process.env.MONGODB_URI || "mongodb+srv://kmfb:kmfb12345@cluster0.fqlhyzi.mongodb.net/?appName=Cluster0";
+  const uri = process.env.MONGODB_URI;
 
   if (isConnected) {
+    return;
+  }
+
+  // MongoDB is entirely optional: without a connection string the platform runs
+  // on its in-memory store so the app always boots.
+  if (!uri) {
+    console.log('[Kisan Mitra] MONGODB_URI not set — running on the in-memory data store.');
     return;
   }
 

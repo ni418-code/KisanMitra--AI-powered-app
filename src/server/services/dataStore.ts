@@ -1,4 +1,6 @@
 import { User, Product, BuyerRequest, Offer, Order, Conversation, NotificationItem, PriceAlert, LogisticsTask } from '../../types/index.ts';
+import { Persistence } from './persistence.ts';
+import { emitToUser } from './realtimeBus.ts';
 
 // Pre-seeded authentic initial mock users for demo & seamless testing
 export const INITIAL_USERS: User[] = [
@@ -380,6 +382,7 @@ class DataStore {
 
   addUser(user: User): User {
     this.users.push(user);
+    Persistence.save('users', user);
     return user;
   }
 
@@ -387,6 +390,7 @@ class DataStore {
     const idx = this.users.findIndex((u) => u.id === id || u.userId === id);
     if (idx !== -1) {
       this.users[idx] = { ...this.users[idx], ...updates, updatedAt: new Date().toISOString() };
+      Persistence.save('users', this.users[idx]);
       return this.users[idx];
     }
     return undefined;
@@ -407,6 +411,7 @@ class DataStore {
 
   addProduct(product: Product): Product {
     this.products.unshift(product);
+    Persistence.save('products', product);
     return product;
   }
 
@@ -414,6 +419,7 @@ class DataStore {
     const idx = this.products.findIndex((p) => p.id === id);
     if (idx !== -1) {
       this.products[idx] = { ...this.products[idx], ...updates, updatedAt: new Date().toISOString() };
+      Persistence.save('products', this.products[idx]);
       return this.products[idx];
     }
     return undefined;
@@ -422,7 +428,9 @@ class DataStore {
   deleteProduct(id: string): boolean {
     const initialLen = this.products.length;
     this.products = this.products.filter((p) => p.id !== id);
-    return this.products.length < initialLen;
+    const removed = this.products.length < initialLen;
+    if (removed) Persistence.remove('products', id);
+    return removed;
   }
 
   // Buyer Requests
@@ -440,6 +448,7 @@ class DataStore {
 
   addBuyerRequest(request: BuyerRequest): BuyerRequest {
     this.buyerRequests.unshift(request);
+    Persistence.save('buyerRequests', request);
     return request;
   }
 
@@ -447,6 +456,7 @@ class DataStore {
     const idx = this.buyerRequests.findIndex((r) => r.id === id);
     if (idx !== -1) {
       this.buyerRequests[idx] = { ...this.buyerRequests[idx], ...updates };
+      Persistence.save('buyerRequests', this.buyerRequests[idx]);
       return this.buyerRequests[idx];
     }
     return undefined;
@@ -455,7 +465,9 @@ class DataStore {
   deleteBuyerRequest(id: string): boolean {
     const initialLen = this.buyerRequests.length;
     this.buyerRequests = this.buyerRequests.filter((r) => r.id !== id);
-    return this.buyerRequests.length < initialLen;
+    const removed = this.buyerRequests.length < initialLen;
+    if (removed) Persistence.remove('buyerRequests', id);
+    return removed;
   }
 
   // Offers
@@ -466,13 +478,23 @@ class DataStore {
 
   addOffer(offer: Offer): Offer {
     this.offers.unshift(offer);
+    Persistence.save('offers', offer);
     return offer;
+  }
+
+  deleteOffer(id: string): boolean {
+    const initial = this.offers.length;
+    this.offers = this.offers.filter((o) => o.id !== id);
+    const removed = this.offers.length < initial;
+    if (removed) Persistence.remove('offers', id);
+    return removed;
   }
 
   updateOffer(id: string, updates: Partial<Offer>): Offer | undefined {
     const idx = this.offers.findIndex((o) => o.id === id);
     if (idx !== -1) {
       this.offers[idx] = { ...this.offers[idx], ...updates, updatedAt: new Date().toISOString() };
+      Persistence.save('offers', this.offers[idx]);
       return this.offers[idx];
     }
     return undefined;
@@ -495,6 +517,7 @@ class DataStore {
 
   addOrder(order: Order): Order {
     this.orders.unshift(order);
+    Persistence.save('orders', order);
     return order;
   }
 
@@ -502,6 +525,7 @@ class DataStore {
     const idx = this.orders.findIndex((o) => o.id === id || o.orderId === id);
     if (idx !== -1) {
       this.orders[idx] = { ...this.orders[idx], ...updates, updatedAt: new Date().toISOString() };
+      Persistence.save('orders', this.orders[idx]);
       return this.orders[idx];
     }
     return undefined;
@@ -518,6 +542,7 @@ class DataStore {
 
   addConversation(conv: Conversation): Conversation {
     this.conversations.unshift(conv);
+    Persistence.save('conversations', conv);
     return conv;
   }
 
@@ -528,6 +553,7 @@ class DataStore {
       conv.lastMessage = message.text;
       conv.lastMessageAt = new Date().toISOString();
       conv.updatedAt = new Date().toISOString();
+      Persistence.save('conversations', conv);
       return conv;
     }
     return undefined;
@@ -540,6 +566,9 @@ class DataStore {
 
   addNotification(notif: NotificationItem): NotificationItem {
     this.notifications.unshift(notif);
+    Persistence.save('notifications', notif);
+    // Real-time push to the recipient's socket room (no-op without Socket.IO).
+    emitToUser(notif.userId, 'notification', notif);
     return notif;
   }
 
@@ -547,6 +576,7 @@ class DataStore {
     const n = this.notifications.find((item) => item.id === id);
     if (n) {
       n.isRead = true;
+      Persistence.save('notifications', n);
       return true;
     }
     return false;
@@ -559,13 +589,16 @@ class DataStore {
 
   addAlert(alert: PriceAlert): PriceAlert {
     this.alerts.unshift(alert);
+    Persistence.save('alerts', alert);
     return alert;
   }
 
   deleteAlert(id: string): boolean {
     const initial = this.alerts.length;
     this.alerts = this.alerts.filter((a) => a.id !== id);
-    return this.alerts.length < initial;
+    const removed = this.alerts.length < initial;
+    if (removed) Persistence.remove('alerts', id);
+    return removed;
   }
 
   // Logistics & Storage Tasks
@@ -580,6 +613,7 @@ class DataStore {
 
   addLogisticsTask(task: LogisticsTask): LogisticsTask {
     this.logisticsTasks.unshift(task);
+    Persistence.save('logisticsTasks', task);
     return task;
   }
 
@@ -587,6 +621,7 @@ class DataStore {
     const idx = this.logisticsTasks.findIndex((task) => task.id === id);
     if (idx !== -1) {
       this.logisticsTasks[idx] = { ...this.logisticsTasks[idx], ...updates, completedAt: updates.status === 'completed' || updates.status === 'stored' ? new Date().toISOString() : this.logisticsTasks[idx].completedAt };
+      Persistence.save('logisticsTasks', this.logisticsTasks[idx]);
       return this.logisticsTasks[idx];
     }
     return undefined;
@@ -594,3 +629,11 @@ class DataStore {
 }
 
 export const dataStore = new DataStore();
+
+/** Persist an entity that a controller mutated in place (e.g. toggling a price alert). */
+export function persistEntity(
+  kind: 'users' | 'products' | 'buyerRequests' | 'offers' | 'orders' | 'conversations' | 'notifications' | 'alerts' | 'logisticsTasks',
+  entity: any
+): void {
+  Persistence.save(kind, entity);
+}

@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUserDoc extends Document {
+  id?: string;
   userId: string;
   name: string;
   phone: string;
@@ -24,6 +25,7 @@ export interface IUserDoc extends Document {
 
 const UserSchema = new Schema<IUserDoc>(
   {
+    id: { type: String, index: true },
     userId: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
     phone: { type: String, required: true, index: true },
@@ -42,7 +44,7 @@ const UserSchema = new Schema<IUserDoc>(
     farmSizeAcres: { type: Number },
     businessType: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 export const UserModel = mongoose.models.User || mongoose.model<IUserDoc>('User', UserSchema);

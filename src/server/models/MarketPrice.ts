@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMarketPriceDoc extends Document {
+  id?: string;
   commodity: string;
   cropName: string;
   variety?: string;
@@ -20,6 +21,7 @@ export interface IMarketPriceDoc extends Document {
 
 const MarketPriceSchema = new Schema<IMarketPriceDoc>(
   {
+    id: { type: String, index: true },
     commodity: { type: String, required: true, index: true },
     cropName: { type: String, required: true, index: true },
     variety: { type: String, default: 'Other' },
@@ -36,7 +38,7 @@ const MarketPriceSchema = new Schema<IMarketPriceDoc>(
     source: { type: String, default: 'Government AGMARKNET (data.gov.in)' },
     fetchedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 MarketPriceSchema.index({ cropName: 1, district: 1, market: 1, arrivalDate: -1 });

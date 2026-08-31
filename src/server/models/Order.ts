@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrderDoc extends Document {
+  id: string;
   orderId: string;
   buyerId: string;
   buyerName: string;
@@ -32,12 +33,19 @@ export interface IOrderDoc extends Document {
   orderStatus: 'pending' | 'accepted' | 'processing' | 'ready_for_shipping' | 'shipped' | 'out_for_delivery' | 'delivered' | 'completed' | 'cancelled';
   trackingNotes?: string;
   estimatedDeliveryDate?: string;
+  escrowStep?: string;
+  escrowStatus?: string;
+  deliveryMarked?: boolean;
+  qualityVerified?: boolean;
+  escrowReleasedAt?: Date;
+  escrowHistory?: { label: string; at: Date | string }[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 const OrderSchema = new Schema<IOrderDoc>(
   {
+    id: { type: String, required: true, unique: true, index: true },
     orderId: { type: String, required: true, unique: true, index: true },
     buyerId: { type: String, required: true, index: true },
     buyerName: { type: String, required: true },
@@ -65,7 +73,7 @@ const OrderSchema = new Schema<IOrderDoc>(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'escrow_held', 'paid', 'refunded', 'failed'],
+      enum: ['pending', 'escrow_held', 'escrow_funded', 'released', 'paid', 'refunded', 'failed'],
       default: 'pending',
     },
     paymentMethod: { type: String, default: 'Escrow Simulation (UPI / Bank)' },
@@ -82,8 +90,25 @@ const OrderSchema = new Schema<IOrderDoc>(
     },
     trackingNotes: { type: String, default: 'Order registered in Kisan Mitra network.' },
     estimatedDeliveryDate: { type: String },
+    // 4-step secure escrow workflow state
+    escrowStep: {
+      type: String,
+      enum: ['awaiting_deposit', 'funds_locked', 'farmer_delivered', 'quality_verified', 'released'],
+      default: 'awaiting_deposit',
+    },
+    escrowStatus: { type: String },
+    deliveryMarked: { type: Boolean, default: false },
+    qualityVerified: { type: Boolean, default: false },
+    escrowReleasedAt: { type: Date },
+    escrowHistory: [
+      {
+        _id: false,
+        label: { type: String },
+        at: { type: Date, default: Date.now },
+      },
+    ],
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 OrderSchema.index({ buyerId: 1, farmerId: 1, orderStatus: 1 });

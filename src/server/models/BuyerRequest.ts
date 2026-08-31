@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBuyerRequestDoc extends Document {
+  id: string;
   buyerId: string;
   buyerName: string;
   buyerPhone: string;
@@ -27,6 +28,7 @@ export interface IBuyerRequestDoc extends Document {
 
 const BuyerRequestSchema = new Schema<IBuyerRequestDoc>(
   {
+    id: { type: String, required: true, unique: true, index: true },
     buyerId: { type: String, required: true, index: true },
     buyerName: { type: String, required: true },
     buyerPhone: { type: String, required: true },
@@ -54,7 +56,7 @@ const BuyerRequestSchema = new Schema<IBuyerRequestDoc>(
     },
     expiresAt: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 BuyerRequestSchema.index({ buyerId: 1, cropName: 1, status: 1 });

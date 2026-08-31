@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { dataStore } from '../services/dataStore.ts';
 import { User, UserRole } from '../../types/index.ts';
@@ -7,7 +8,23 @@ export interface AuthenticatedRequest extends Request {
   user?: User;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'bc1aba17f77fdb34edadc4d1994a0ddf334ac484e9e763ac36e691d92686f440';
+/**
+ * Secret used to sign/verify login tokens.
+ * Reads JWT_SECRET from the environment (Render → Environment → JWT_SECRET).
+ * If it is not configured we generate a random one per boot so the app still
+ * works locally; note that sessions then do not survive a restart.
+ */
+const JWT_SECRET = (() => {
+  const fromEnv = process.env.JWT_SECRET;
+  if (fromEnv && fromEnv.trim().length > 0) return fromEnv;
+
+  const generated = crypto.randomBytes(48).toString('hex');
+  console.warn(
+    '[Kisan Mitra] JWT_SECRET is not set — generated an ephemeral secret for this process. ' +
+      'Set JWT_SECRET in the environment to keep users logged in across restarts.'
+  );
+  return generated;
+})();
 
 export function signToken(user: User): string {
   return jwt.sign(

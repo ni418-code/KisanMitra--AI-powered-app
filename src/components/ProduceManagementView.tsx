@@ -107,6 +107,15 @@ export const ProduceManagementView: React.FC<ProduceManagementViewProps> = ({
     }
   };
 
+  const handleToggleSold = async (prod: Product) => {
+    const res = await api.updateProduct(prod.id, {
+      status: prod.status === 'sold' ? 'available' : 'sold',
+    });
+    if (res.success) {
+      fetchProducts();
+    }
+  };
+
   const handleViewMatches = async (product: Product) => {
     setSelectedProductForMatches(product);
     setMatchesLoading(true);
@@ -225,6 +234,13 @@ export const ProduceManagementView: React.FC<ProduceManagementViewProps> = ({
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>Matching Buyers</span>
+                </button>
+                <button
+                  onClick={() => handleToggleSold(prod)}
+                  className="p-2 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition"
+                  title={prod.status === 'sold' ? 'Relist as available' : 'Mark as sold'}
+                >
+                  <CheckCircle className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteProduct(prod.id)}

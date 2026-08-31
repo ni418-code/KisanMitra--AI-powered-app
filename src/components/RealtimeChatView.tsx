@@ -97,7 +97,9 @@ export const RealtimeChatView: React.FC<RealtimeChatViewProps> = ({ initialConve
   }, [socket, activeConv]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [activeConv?.messages]);
 
   const [isSending, setIsSending] = useState(false);

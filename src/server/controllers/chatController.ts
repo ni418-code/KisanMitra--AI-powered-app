@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { dataStore } from '../services/dataStore.ts';
 import { AuthenticatedRequest } from '../middleware/auth.ts';
 import { Conversation, ChatMessage } from '../../types/index.ts';
+import { emitToConversation } from '../services/realtimeBus.ts';
 
 export class ChatController {
   /**
@@ -138,10 +139,11 @@ export class ChatController {
       isRead: false,
     };
 
-    conv.messages.push(newMsg);
-    conv.lastMessage = newMsg.text;
-    conv.lastMessageAt = new Date().toISOString();
-    conv.updatedAt = new Date().toISOString();
+    // Route through the store so real-time state and MongoDB stay in sync.
+    dataStore.addMessageToConversation(conv.id, newMsg);
+
+    // Broadcast to the other party (and any other open tab) in real time.
+    emitToConversation(conv.id, 'new-message', { conversationId: conv.id, message: newMsg });
 
     // Notify other party
     const recipientId = conv.buyerId === req.user.id ? conv.farmerId : conv.buyerId;

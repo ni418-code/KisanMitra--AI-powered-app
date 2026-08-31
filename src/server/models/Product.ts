@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IProductDoc extends Document {
+  id: string;
   farmerId: string;
   farmerName: string;
   farmerPhone: string;
@@ -32,6 +33,7 @@ export interface IProductDoc extends Document {
 
 const ProductSchema = new Schema<IProductDoc>(
   {
+    id: { type: String, required: true, unique: true, index: true },
     farmerId: { type: String, required: true, index: true },
     farmerName: { type: String, required: true },
     farmerPhone: { type: String, required: true },
@@ -58,7 +60,7 @@ const ProductSchema = new Schema<IProductDoc>(
     description: { type: String },
     status: { type: String, enum: ['available', 'reserved', 'sold', 'expired'], default: 'available', index: true },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 ProductSchema.index({ farmerId: 1, cropName: 1, status: 1 });

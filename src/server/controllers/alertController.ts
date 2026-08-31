@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { dataStore } from '../services/dataStore.ts';
+import { dataStore, persistEntity } from '../services/dataStore.ts';
 import { AuthenticatedRequest } from '../middleware/auth.ts';
 import { PriceAlert } from '../../types/index.ts';
 
@@ -57,6 +57,7 @@ export class AlertController {
       return;
     }
     alert.active = !alert.active;
+    persistEntity('alerts', alert);
     res.json({ success: true, data: { alert } });
   }
 
