@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
+import { api } from '../services/api.ts';
 import { getLocalizedCropName } from '../services/translations.ts';
 import {
   Handshake,
@@ -153,10 +154,34 @@ export const SmartMatchingView: React.FC<SmartMatchingViewProps> = ({
     setCounterPrice(item.expectedPrice);
   };
 
-  const handleConfirmOffer = (e: React.FormEvent) => {
+  const handleConfirmOffer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeMatchModal) return;
-    setOfferSent(`Bilateral proposal of ₹${counterPrice}/kg sent directly to ${activeMatchModal.partyName}! Track negotiation under Offers tab.`);
+    if (!activeMatchModal || !user) return;
+
+    const isFarmerView = user.role === 'farmer';
+    const targetUserId = isFarmerView ? 'usr-2' : 'usr-1';
+    const targetUserName = isFarmerView ? 'Rajesh Agro Foods Ltd' : 'Ramesh Patel';
+
+    // Actually dispatch a real offer through the backend so it shows up in
+    // "Offers & Negotiations" for both the user and the counterparty.
+    const res = await api.createOffer({
+      productId: isFarmerView ? 'prod-1' : undefined,
+      buyerRequestId: isFarmerView ? undefined : 'req-1',
+      targetUserId,
+      targetUserName,
+      cropName: activeMatchModal.crop,
+      quantity: 2000,
+      unit: 'kg',
+      proposedPrice: Number(counterPrice) || 0,
+      transportIncluded: false,
+      notes: 'Bilateral proposal sent via KisanMitra Smart Matching Engine.',
+    });
+
+    if (res.success) {
+      setOfferSent(`Bilateral proposal of ₹${counterPrice}/kg sent directly to ${activeMatchModal.partyName}! Track negotiation under the Offers tab.`);
+    } else {
+      setOfferSent(res.message || 'Offer could not be dispatched. Please retry.');
+    }
     setActiveMatchModal(null);
     setTimeout(() => setOfferSent(null), 6000);
   };

@@ -90,6 +90,12 @@ export class OrderController {
     const transportCost = customTransportCost !== undefined ? Number(customTransportCost) : Math.round(qty * 1.5);
     const storageCost = 150;
     const totalAmount = productAmount + transportCost + storageCost;
+    const costBreakdown = {
+      productAmount,
+      transportCost,
+      handlingCost: storageCost,
+      totalAmount,
+    };
 
     const buyerUser = dataStore.getUserById(buyerId);
     const farmerUser = dataStore.getUserById(farmerId);
@@ -97,7 +103,7 @@ export class OrderController {
     const orderIdNum = Math.floor(10000 + Math.random() * 90000);
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
-      orderId: `KM-ORD-${orderIdNum}`,
+      orderId: `KM-${new Date().getFullYear()}-${orderIdNum}`,
       buyerId,
       buyerName: buyerUser?.name || 'Agri Buyer',
       buyerPhone: buyerUser?.phone || '9123456780',
@@ -110,10 +116,12 @@ export class OrderController {
       quantity: qty,
       unit: unit as any,
       agreedPrice: price,
+      pricePerUnit: price,
       productAmount,
       transportCost,
       storageCost,
       totalAmount,
+      costBreakdown,
       deliveryLocation: deliveryLocation || buyerUser?.location || { state: 'Telangana', district: 'Hyderabad', market: 'Bowenpally' },
       paymentStatus: 'pending',
       paymentMethod: 'Escrow Simulation (UPI / Bank Transfer)',

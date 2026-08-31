@@ -252,7 +252,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ onNavi
       toolResult = {
         type: 'payment_status',
         data: {
-          orderId: 'KM-ORD-9021',
+          orderId: 'KM-2026-9021',
           amount: '₹34,000',
           escrowStatus: activeLocale.labels.securedEscrow,
           status: language === 'te' ? 'కొనుగోలుదారు డెలివరీ నిర్ధారణ కోసం వేచి ఉంది' : language === 'hi' ? 'खरीदार द्वारा डिलीवरी पुष्टि की प्रतीक्षा है' : 'Waiting for Delivery Confirmation by Buyer',

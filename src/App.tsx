@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { SocketProvider } from './context/SocketContext.tsx';
 import { Sidebar, AppView } from './components/Sidebar.tsx';
@@ -55,6 +55,18 @@ const MainApp: React.FC = () => {
   const isFarmer = user?.role === 'farmer';
   const isBuyer = user?.role === 'buyer';
 
+  // Keep the current view valid for the active role (e.g. after switching demo
+  // users while sitting on a farmer-only page). Buyers must never see
+  // MSP / Logistics / Profit-Sale pages.
+  useEffect(() => {
+    if (isBuyer && ['msp_table', 'logistics_storage', 'profit_calculator'].includes(currentView)) {
+      setCurrentView('dashboard');
+    }
+    if (user && currentView === 'landing') {
+      setCurrentView('dashboard');
+    }
+  }, [user?.role, currentView]);
+
   const handleOpenAuth = (role: 'farmer' | 'buyer' = 'farmer', mode: 'login' | 'register' = 'login') => {
     setAuthModalRole(role);
     setAuthModalMode(mode);
@@ -62,8 +74,14 @@ const MainApp: React.FC = () => {
   };
 
   const handleAuthSuccess = () => {
+    // Close the login popup and go straight to the dashboard. We set the view
+    // directly instead of going through navigateTo() because the auth guard in
+    // navigateTo() checks the (still stale) `user` state right after login and
+    // would re-open the popup.
     setIsAuthModalOpen(false);
-    navigateTo('dashboard');
+    setIsSidebarOpen(false);
+    setCurrentView('dashboard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLogout = () => {

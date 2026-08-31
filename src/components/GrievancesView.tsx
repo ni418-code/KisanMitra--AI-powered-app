@@ -27,7 +27,7 @@ interface Dispute {
 export const GrievancesView: React.FC = () => {
   const { user, t } = useAuth();
   const [showModal, setShowModal] = useState(false);
-  const [orderId, setOrderId] = useState('KM-ORD-9021');
+  const [orderId, setOrderId] = useState('KM-2026-9021');
   const [category, setCategory] = useState('Quality Grading Discrepancy');
   const [description, setDescription] = useState('');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export const GrievancesView: React.FC = () => {
   const [disputes, setDisputes] = useState<Dispute[]>([
     {
       id: 'DISP-104',
-      orderId: 'KM-ORD-8812',
+      orderId: 'KM-2026-8812',
       party: 'South Fresh Retail Pvt Ltd',
       category: 'Weight Discrepancy at Weighbridge',
       description: 'Dispatched 2,000 kg Tomatoes, buyer weighbridge registered 1,910 kg (90 kg difference).',
@@ -46,7 +46,7 @@ export const GrievancesView: React.FC = () => {
     },
     {
       id: 'DISP-105',
-      orderId: 'KM-ORD-9021',
+      orderId: 'KM-2026-9021',
       party: 'ABC Agro Processing Ltd',
       category: 'Quality Grade Dispute',
       description: 'Buyer reported 8% higher sorting rejects than agreed Grade A specification.',

@@ -190,7 +190,7 @@ export const INITIAL_BUYER_REQUESTS: BuyerRequest[] = [
 export const INITIAL_ORDERS: Order[] = [
   {
     id: 'ord-1',
-    orderId: 'KM-ORD-84920',
+    orderId: 'KM-2026-0891',
     buyerId: 'usr-2',
     buyerName: 'Rajesh Agro Foods Ltd',
     buyerPhone: '9123456780',
@@ -232,7 +232,7 @@ export const INITIAL_ORDERS: Order[] = [
 export const INITIAL_CONVERSATIONS: Conversation[] = [
   {
     id: 'conv-1',
-    orderId: 'KM-ORD-84920',
+    orderId: 'KM-2026-0891',
     buyerRequestId: 'req-1',
     buyerId: 'usr-2',
     buyerName: 'Rajesh Agro Foods Ltd',
@@ -281,7 +281,7 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     id: 'notif-2',
     userId: 'usr-1',
     title: 'Order Escrow Payment Secured',
-    message: 'Buyer deposited ₹15,000 for Order #KM-ORD-84920 into verified escrow.',
+    message: 'Buyer deposited ₹15,000 for Order #KM-2026-0891 into verified escrow.',
     type: 'order',
     referenceId: 'ord-1',
     isRead: true,

@@ -125,6 +125,12 @@ export class OfferController {
     const transportCost = offer.transportIncluded ? 0 : Math.round(offer.quantity * 1.5);
     const storageCost = 150;
     const totalAmount = productAmount + transportCost + storageCost;
+    const costBreakdown = {
+      productAmount,
+      transportCost,
+      handlingCost: storageCost,
+      totalAmount,
+    };
 
     const buyerUser = dataStore.getUserById(offer.buyerId);
     const farmerUser = dataStore.getUserById(offer.farmerId);
@@ -132,7 +138,7 @@ export class OfferController {
     const orderIdNum = Math.floor(10000 + Math.random() * 90000);
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
-      orderId: `KM-ORD-${orderIdNum}`,
+      orderId: `KM-${new Date().getFullYear()}-${orderIdNum}`,
       buyerId: offer.buyerId,
       buyerName: offer.buyerName,
       buyerPhone: buyerUser?.phone || '9123456780',
@@ -145,10 +151,12 @@ export class OfferController {
       quantity: offer.quantity,
       unit: offer.unit,
       agreedPrice: offer.proposedPrice,
+      pricePerUnit: offer.proposedPrice,
       productAmount,
       transportCost,
       storageCost,
       totalAmount,
+      costBreakdown,
       deliveryLocation: buyerUser?.location || { state: 'Telangana', district: 'Hyderabad', market: 'Bowenpally' },
       paymentStatus: 'pending',
       paymentMethod: 'Escrow Simulation (UPI / Bank Transfer)',
@@ -197,6 +205,24 @@ export class OfferController {
         createdAt: new Date().toISOString(),
       };
       conv = dataStore.addConversation(newConv);
+    }
+
+    // Push an explicit acceptance message into the conversation so the other
+    // party immediately sees "Offer accepted" in their chat (existing conv or not).
+    if (conv) {
+      const acceptMsg = {
+        id: `msg-${Date.now()}-accept`,
+        senderId: req.user.id,
+        senderName: req.user.name,
+        senderRole: req.user.role,
+        text: `✅ Offer accepted! Order #${savedOrder.orderId} created for ${offer.quantity} ${offer.unit} ${offer.cropName} at ₹${offer.proposedPrice}/${offer.unit}. Total Amount: ₹${totalAmount.toLocaleString('en-IN')}.`,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+      };
+      conv.messages.push(acceptMsg);
+      conv.lastMessage = acceptMsg.text;
+      conv.lastMessageAt = acceptMsg.timestamp;
+      conv.updatedAt = acceptMsg.timestamp;
     }
 
     // Notify both parties

@@ -51,7 +51,7 @@ export class AdminController {
     const disputes = [
       {
         id: 'disp-1',
-        orderId: 'KM-ORD-84920',
+        orderId: 'KM-2026-0891',
         raisedBy: 'usr-2',
         reason: 'Transit delay due to heavy rain in NH-16 corridor',
         status: 'investigating',

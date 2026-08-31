@@ -127,10 +127,10 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-serif">
-              Live Mandi Price Intelligence
+              {t.marketPrices}
             </h1>
             <p className="text-xs sm:text-sm text-emerald-200 mt-1 max-w-xl">
-              Official wholesale arrival prices from APMC markets across India (data.gov.in AGMARKNET dataset).
+              {t.govSource}
             </p>
           </div>
 
@@ -270,7 +270,7 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search crop name (e.g. Tomato, Chilli, Cotton, Onion, Paddy)..."
+              placeholder={t.searchCrop}
               className="w-full pl-10 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             />
           </div>
@@ -284,7 +284,7 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">State</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{t.state}</label>
             <select
               value={selectedState}
               onChange={(e) => {
@@ -300,7 +300,7 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">District</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{t.district}</label>
             <select
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
@@ -377,13 +377,13 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100/70 text-slate-700 font-bold border-b border-slate-200">
                 <tr>
-                  <th className="py-3 px-4">Crop Name</th>
-                  <th className="py-3 px-4">Market Mandi & District</th>
-                  <th className="py-3 px-4">Arrival Date</th>
-                  <th className="py-3 px-4">Min - Max Price</th>
-                  <th className="py-3 px-4">Modal Price (₹/qtl)</th>
-                  <th className="py-3 px-4">Rate (₹/kg)</th>
-                  {isFarmer && <th className="py-3 px-4 text-right">Action</th>}
+                  <th className="py-3 px-4">{t.cropName || 'Crop Name'}</th>
+                  <th className="py-3 px-4">{t.market} & {t.district}</th>
+                  <th className="py-3 px-4">{t.date}</th>
+                  <th className="py-3 px-4">{t.minPrice} - {t.maxPrice}</th>
+                  <th className="py-3 px-4">{t.modalPrice} (₹/qtl)</th>
+                  <th className="py-3 px-4">{t.pricePerKg}</th>
+                  {isFarmer && <th className="py-3 px-4 text-right">{t.actions}</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

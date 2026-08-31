@@ -215,16 +215,16 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
               </h3>
               <div className="space-y-1.5 text-xs text-slate-700">
                 <div className="flex justify-between">
-                  <span>Produce Amount ({selectedOrder.quantity} {selectedOrder.unit} × ₹{selectedOrder.pricePerUnit}/{selectedOrder.unit}):</span>
-                  <span className="font-semibold">₹{(selectedOrder.costBreakdown?.productAmount || 0).toLocaleString('en-IN')}</span>
+                  <span>Produce Amount ({selectedOrder.quantity} {selectedOrder.unit} × ₹{selectedOrder.pricePerUnit || selectedOrder.agreedPrice || '—'}/{selectedOrder.unit}):</span>
+                  <span className="font-semibold">₹{(selectedOrder.costBreakdown?.productAmount || selectedOrder.productAmount || 0).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Transport & Logistics Cost:</span>
-                  <span className="font-semibold">₹{(selectedOrder.costBreakdown?.transportCost || 0).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold">₹{(selectedOrder.costBreakdown?.transportCost || selectedOrder.transportCost || 0).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Mandi Handling & Quality Inspection:</span>
-                  <span className="font-semibold">₹{(selectedOrder.costBreakdown?.handlingCost || 0).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold">₹{(selectedOrder.costBreakdown?.handlingCost || selectedOrder.storageCost || 0).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-slate-200 font-extrabold text-sm text-emerald-950">
                   <span>Total Order Consideration:</span>
@@ -294,13 +294,13 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
               </div>
             </div>
 
-            {/* Action Advance Status */}
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            {/* Action Advance Status — only farmer (or admin) drives the shipping timeline */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
               <span className="text-xs text-slate-500">
-                Delivery: {selectedOrder.deliveryAddress.district}, {selectedOrder.deliveryAddress.state}
+                Delivery: {(selectedOrder.deliveryAddress || selectedOrder.deliveryLocation || { district: '—', state: '' }).district}, {(selectedOrder.deliveryAddress || selectedOrder.deliveryLocation || { state: '' }).state}
               </span>
               
-              {selectedOrder.orderStatus !== 'completed' && (
+              {user?.role !== 'buyer' && selectedOrder.orderStatus !== 'completed' && (
                 <div className="flex items-center space-x-2">
                   {selectedOrder.orderStatus === 'accepted' && (
                     <button

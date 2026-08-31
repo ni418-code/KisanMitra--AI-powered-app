@@ -42,8 +42,11 @@ export const RealtimeChatView: React.FC<RealtimeChatViewProps> = ({ initialConve
       const convList = res.data.conversations || [];
       setConversations(convList);
       if (initialConversationId) {
-        const found = convList.find((c) => c.id === initialConversationId || c.orderId === initialConversationId);
+        const found = convList.find(
+          (c) => c.id === initialConversationId || c.orderId === initialConversationId || c.buyerRequestId === initialConversationId
+        );
         if (found) setActiveConv(found);
+        else if (convList.length > 0 && !activeConv) setActiveConv(convList[0]);
       } else if (convList.length > 0 && !activeConv) {
         setActiveConv(convList[0]);
       }
