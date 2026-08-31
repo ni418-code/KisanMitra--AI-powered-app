@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
 import { dataStore } from '../services/dataStore.ts';
 import { User, UserRole } from '../../types/index.ts';
 
@@ -7,7 +8,9 @@ export interface AuthenticatedRequest extends Request {
   user?: User;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'bc1aba17f77fdb34edadc4d1994a0ddf334ac484e9e763ac36e691d92686f440';
+// Configure JWT_SECRET in Render/local .env for stable sessions across restarts.
+// A process-local random fallback keeps the demo usable when the variable is omitted.
+const JWT_SECRET = process.env.JWT_SECRET?.trim() || crypto.randomBytes(32).toString('hex');
 
 export function signToken(user: User): string {
   return jwt.sign(
@@ -48,7 +51,7 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
     }
     req.user = user;
     next();
-  } catch (err: any) {
+  } catch (_err: any) {
     res.status(401).json({
       success: false,
       message: 'Invalid or expired token.',
