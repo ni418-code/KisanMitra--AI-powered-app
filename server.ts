@@ -4,7 +4,6 @@ import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import apiRoutes from './src/server/routes/api.ts';
 import { connectDB } from './src/server/config/db.ts';
 import { MarketService } from './src/server/services/marketService.ts';
@@ -12,14 +11,12 @@ import { dataStore } from './src/server/services/dataStore.ts';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
 const app = express();
 const httpServer = createHttpServer(app);
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3000;
 
 // CORS configuration - allow all origins in development and preview environments
 const rawCorsOrigin = process.env.CORS_ORIGIN?.trim();
