@@ -14,13 +14,14 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
 const app = express();
 const httpServer = createHttpServer(app);
 
 // Render injects PORT for web services. Keep a production fallback of 10000
 // and a developer-friendly 3000 fallback for local use.
-const PORT = Number(process.env.PORT) || (process.env.NODE_ENV === 'production' ? 10000 : 3000);
+const PORT = Number(process.env.PORT) || (isProduction ? 10000 : 3000);
 
 // CORS can be restricted through CORS_ORIGIN. Leave it unset for the demo.
 const allowedOrigins = (process.env.CORS_ORIGIN || '*')
@@ -38,7 +39,6 @@ const corsOrigin = allowedOrigins.includes('*')
       }
     };
 
-// Socket.IO Server Configuration
 const io = new SocketIOServer(httpServer, {
   cors: {
     origin: corsOrigin,
@@ -46,12 +46,11 @@ const io = new SocketIOServer(httpServer, {
   },
 });
 
-// Security & Parsing Middlewares
 app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health check endpoint — intentionally lightweight for Render readiness checks.
+// Lightweight HTTP health endpoint for Render readiness checks.
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     status: 'healthy',
@@ -61,10 +60,8 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// API Routes
 app.use('/api', apiRoutes);
 
-// Socket.IO Real-Time Chat & Notification Management
 io.on('connection', (socket) => {
   console.log(`[Socket.IO] Client connected: ${socket.id}`);
 
@@ -116,8 +113,7 @@ async function start() {
     MarketService.syncMarketData().catch((err) => console.log('[Scheduler Sync Note]', err.message));
   }, Math.max(5, syncIntervalMinutes) * 60 * 1000);
 
-  // Vite development / production static integration
-  if (process.env.NODE_ENV !== 'production') {
+  if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'] },
