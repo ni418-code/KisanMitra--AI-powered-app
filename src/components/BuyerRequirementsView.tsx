@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   DollarSign,
   Truck,
+  Trash2,
 } from 'lucide-react';
 
 interface BuyerRequirementsViewProps {
@@ -104,6 +105,12 @@ export const BuyerRequirementsView: React.FC<BuyerRequirementsViewProps> = ({
       setMatches(res.data.matches || []);
     }
     setMatchesLoading(false);
+  };
+
+  const handleDeleteRequirement = async (id: string) => {
+    setRequests((prev) => prev.filter((r) => r.id !== id));
+    await api.deleteBuyerRequest(id);
+    fetchData();
   };
 
   const handleOpenOfferModal = (target: any) => {
@@ -249,13 +256,20 @@ export const BuyerRequirementsView: React.FC<BuyerRequirementsViewProps> = ({
                     <p className="text-xs text-slate-600">{req.description}</p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                     <button
                       onClick={() => handleOpenMatches(req)}
-                      className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center space-x-1.5"
+                      className="flex-grow py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center space-x-1.5 cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                       <span>View Matched Farmers</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteRequirement(req.id)}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                      title="Delete Requirement"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -348,7 +362,7 @@ export const BuyerRequirementsView: React.FC<BuyerRequirementsViewProps> = ({
                     required
                     value={cropName}
                     onChange={(e) => setCropName(e.target.value)}
-                    placeholder="e.g. Tomato, Chilli, Cotton"
+                    placeholder="e.g. Tomato, Chilli, Paddy"
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold"
                   />
                 </div>

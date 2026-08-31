@@ -153,17 +153,17 @@ export const SEED_MARKET_PRICES = [
     fetchedAt: new Date(),
   },
   {
-    commodity: 'Cotton',
-    cropName: 'Cotton',
-    variety: 'Medium Staple',
-    category: 'Commercial',
-    market: 'Warangal Mandi',
-    district: 'Warangal',
+    commodity: 'Turmeric',
+    cropName: 'Turmeric',
+    variety: 'Salem Special Finger',
+    category: 'Spices',
+    market: 'Nizamabad Mandi',
+    district: 'Nizamabad',
     state: 'Telangana',
-    minPrice: 6800,
-    modalPrice: 7350,
-    maxPrice: 7700,
-    pricePerKg: 73.5,
+    minPrice: 13500,
+    modalPrice: 14200,
+    maxPrice: 15100,
+    pricePerKg: 142.0,
     priceUnit: '₹/Quintal',
     arrivalDate: '2026-08-25',
     source: 'Government AGMARKNET (data.gov.in)',
@@ -278,7 +278,6 @@ export class MarketService {
     if (/potato/i.test(s)) return 'Potato';
     if (/chilli|chilly|mirchi/i.test(s)) return 'Chilli';
     if (/paddy|rice|dhan/i.test(s)) return 'Paddy (Rice)';
-    if (/cotton|kapas/i.test(s)) return 'Cotton';
     if (/wheat|gehun/i.test(s)) return 'Wheat';
     if (/maize|corn|makka/i.test(s)) return 'Maize';
     if (/soyabean|soybean/i.test(s)) return 'Soybean';
@@ -300,7 +299,7 @@ export class MarketService {
     if (/gram|chana|arhar|tur|moong|urad|masur/i.test(c)) return 'Pulses';
     if (/groundnut|soybean|mustard|sunflower|sesamum/i.test(c)) return 'Oilseeds';
     if (/chilli|turmeric|coriander|cumin|ginger|garlic/i.test(c)) return 'Spices';
-    if (/cotton|sugarcane|jute/i.test(c)) return 'Commercial';
+    if (/sugarcane|jute|tobacco/i.test(c)) return 'Commercial';
     return 'Other';
   }
 

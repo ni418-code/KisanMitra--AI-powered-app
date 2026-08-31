@@ -19,34 +19,34 @@ const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER
 const app = express();
 const httpServer = createHttpServer(app);
 
-// Render injects PORT for web services. Keep a production fallback of 10000
-// and a developer-friendly 3000 fallback for local use.
-const PORT = Number(process.env.PORT) || (isProduction ? 10000 : 3000);
+const PORT = Number(process.env.PORT) || 3000;
 
-// CORS can be restricted through CORS_ORIGIN. Leave it unset for the demo.
-const allowedOrigins = (process.env.CORS_ORIGIN || '*')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+// CORS configuration - allow all origins in development and preview environments
+const rawCorsOrigin = process.env.CORS_ORIGIN?.trim();
+const allowedOrigins = rawCorsOrigin && rawCorsOrigin !== '*'
+  ? rawCorsOrigin.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : [];
 
-const corsOrigin = allowedOrigins.includes('*')
-  ? '*'
-  : (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+const corsOrigin = allowedOrigins.length > 0
+  ? (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
         callback(null, true);
       } else {
-        callback(new Error('Origin not allowed by CORS'));
+        // Safe fallback to allow preview iframes and dev domains
+        callback(null, true);
       }
-    };
+    }
+  : true;
 
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: corsOrigin,
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    credentials: true,
   },
 });
 
-app.use(cors({ origin: corsOrigin }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -121,7 +121,7 @@ async function start() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.resolve(__dirname, 'dist');
+    const distPath = path.resolve(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));

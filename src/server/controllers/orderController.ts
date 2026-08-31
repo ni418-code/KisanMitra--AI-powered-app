@@ -411,4 +411,27 @@ export class OrderController {
       data: { order },
     });
   }
+
+  /**
+   * Delete / Cancel Order
+   */
+  static async deleteOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const orderId = req.params.id;
+    const order = dataStore.getOrderById(orderId);
+    if (!order) {
+      res.status(404).json({ success: false, message: 'Order not found.' });
+      return;
+    }
+
+    const deleted = dataStore.deleteOrder(orderId);
+    if (!deleted) {
+      res.status(500).json({ success: false, message: 'Failed to delete order.' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: `Order #${order.orderId} deleted successfully.`,
+    });
+  }
 }

@@ -15,6 +15,7 @@ import {
   DollarSign,
   ChevronRight,
   ArrowRight,
+  Trash2,
 } from 'lucide-react';
 
 interface OrdersManagementViewProps {
@@ -77,6 +78,14 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
       setSelectedOrder(res.data.order);
       fetchOrders();
     }
+  };
+
+  const handleDeleteOrder = async (orderId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    if (selectedOrder?.id === orderId) setSelectedOrder(null);
+    await api.deleteOrder(orderId);
+    fetchOrders();
   };
 
   return (
@@ -160,17 +169,26 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Escrow: <strong className="text-slate-800">{ord.escrowStatus || ord.paymentStatus}</strong></span>
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedOrder(ord);
-                      onOpenEscrow?.(ord.id);
-                    }}
-                    className="text-emerald-700 font-bold flex items-center hover:underline cursor-pointer"
-                    title="View payment status"
-                  >
-                    Track Milestone <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedOrder(ord);
+                        onOpenEscrow?.(ord.id);
+                      }}
+                      className="text-emerald-700 font-bold flex items-center hover:underline cursor-pointer"
+                      title="View payment status"
+                    >
+                      Track Milestone <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteOrder(ord.id, e)}
+                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                      title="Delete Order"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -197,15 +215,24 @@ export const OrdersManagementView: React.FC<OrdersManagementViewProps> = ({ open
                 </p>
               </div>
 
-              {openChatModal && (
+              <div className="flex items-center space-x-2">
+                {openChatModal && (
+                  <button
+                    onClick={() => openChatModal(selectedOrder.id)}
+                    className="px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold text-xs rounded-xl transition flex items-center space-x-1.5"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Order Chat Room</span>
+                  </button>
+                )}
                 <button
-                  onClick={() => openChatModal(selectedOrder.id)}
-                  className="px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold text-xs rounded-xl transition flex items-center space-x-1.5"
+                  onClick={() => handleDeleteOrder(selectedOrder.id)}
+                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                  title="Delete this order"
                 >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>Order Chat Room</span>
+                  <Trash2 className="w-4 h-4" />
                 </button>
-              )}
+              </div>
             </div>
 
             {/* Server-Side Certified Cost Breakdown (Rule 18) */}

@@ -25,11 +25,10 @@ interface ProduceManagementViewProps {
 
 const PRESET_CROPS = [
   { name: 'Tomato', category: 'Vegetables', defaultPrice: 28, image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=80' },
-  { name: 'Chilli Red', category: 'Spices', defaultPrice: 195, image: 'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?w=500&auto=format&fit=crop&q=80' },
-  { name: 'Cotton', category: 'Commercial', defaultPrice: 72, image: 'https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=500&auto=format&fit=crop&q=80' },
-  { name: 'Paddy (Dhan)', category: 'Cereals', defaultPrice: 25, image: 'https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=500&auto=format&fit=crop&q=80' },
   { name: 'Onion', category: 'Vegetables', defaultPrice: 26, image: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=500&auto=format&fit=crop&q=80' },
-  { name: 'Turmeric', category: 'Spices', defaultPrice: 140, image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Paddy (Rice)', category: 'Cereals', defaultPrice: 25, image: 'https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Chilli Red', category: 'Spices', defaultPrice: 195, image: 'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?w=500&auto=format&fit=crop&q=80' },
+  { name: 'Maize', category: 'Cereals', defaultPrice: 24, image: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=500&auto=format&fit=crop&q=80' },
 ];
 
 export const ProduceManagementView: React.FC<ProduceManagementViewProps> = ({
@@ -101,10 +100,9 @@ export const ProduceManagementView: React.FC<ProduceManagementViewProps> = ({
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (window.confirm('Are you sure you want to remove this produce listing?')) {
-      await api.deleteProduct(id);
-      fetchProducts();
-    }
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    await api.deleteProduct(id);
+    fetchProducts();
   };
 
   const handleViewMatches = async (product: Product) => {
@@ -154,7 +152,7 @@ export const ProduceManagementView: React.FC<ProduceManagementViewProps> = ({
           <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-800">No Produce Lots Listed Yet</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-4">
-            Click "+ Add Produce" to list your tomatoes, chillies, paddy, or cotton and receive instant buyer purchase offers.
+            Click "+ Add Produce" to list your tomatoes, chillies, paddy, or maize and receive instant buyer purchase offers.
           </p>
           <button
             onClick={() => setIsAddModalOpen(true)}

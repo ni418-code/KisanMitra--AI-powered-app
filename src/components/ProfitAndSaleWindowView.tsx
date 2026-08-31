@@ -332,15 +332,32 @@ export const ProfitAndSaleWindowView: React.FC = () => {
   const [costOfCultivationPerKg, setCostOfCultivationPerKg] = useState<number>(12);
   const [holdingDays, setHoldingDays] = useState<number>(0);
 
-  const cropOptions = ['Tomato', 'Chilli', 'Cotton', 'Paddy', 'Turmeric', 'Onion'];
+  const cropOptions = ['Tomato', 'Onion', 'Paddy (Rice)', 'Chilli', 'Maize'];
 
-  // Mandi comparison data with distances from user's farm
+  const CROP_DEFAULTS: Record<string, { basePrice: number; defaultCost: number }> = {
+    'Tomato': { basePrice: 28, defaultCost: 12 },
+    'Onion': { basePrice: 26, defaultCost: 11 },
+    'Paddy (Rice)': { basePrice: 25, defaultCost: 14 },
+    'Paddy': { basePrice: 25, defaultCost: 14 },
+    'Chilli': { basePrice: 195, defaultCost: 85 },
+    'Maize': { basePrice: 24, defaultCost: 13 },
+  };
+
+  const handleCropChange = (crop: string) => {
+    setSelectedCrop(crop);
+    const defaults = CROP_DEFAULTS[crop] || { basePrice: 28, defaultCost: 12 };
+    setCostOfCultivationPerKg(defaults.defaultCost);
+  };
+
+  const cropBase = (CROP_DEFAULTS[selectedCrop] || { basePrice: 28 }).basePrice;
+
+  // Mandi comparison data with distances and dynamic price offsets
   const mandis = [
-    { name: 'Guntur APMC Mandi', district: 'Guntur, AP', distanceKm: 14, modalPricePerKg: 28.0, transitCostPerKg: 0.8, trend: 'up', arrivalVolume: 'Moderate', demandLevel: 'High' },
-    { name: 'Vijayawada Wholesale Yard', district: 'Krishna, AP', distanceKm: 42, modalPricePerKg: 31.5, transitCostPerKg: 1.8, trend: 'up', arrivalVolume: 'Low', demandLevel: 'Very High' },
-    { name: 'Tenali Fruit & Veg Market', district: 'Guntur, AP', distanceKm: 28, modalPricePerKg: 29.0, transitCostPerKg: 1.2, trend: 'stable', arrivalVolume: 'Normal', demandLevel: 'Moderate' },
-    { name: 'Hyderabad Bowenpally', district: 'Hyderabad, TS', distanceKm: 275, modalPricePerKg: 35.0, transitCostPerKg: 4.5, trend: 'up', arrivalVolume: 'High', demandLevel: 'High' },
-    { name: 'Ongole Agriculture Market', district: 'Prakasam, AP', distanceKm: 110, modalPricePerKg: 27.5, transitCostPerKg: 2.6, trend: 'down', arrivalVolume: 'Heavy', demandLevel: 'Low' },
+    { name: 'Guntur APMC Mandi', district: 'Guntur, AP', distanceKm: 14, modalPricePerKg: cropBase, transitCostPerKg: 0.8, trend: 'up', arrivalVolume: 'Moderate', demandLevel: 'High' },
+    { name: 'Vijayawada Wholesale Yard', district: 'Krishna, AP', distanceKm: 42, modalPricePerKg: cropBase * 1.12, transitCostPerKg: 1.8, trend: 'up', arrivalVolume: 'Low', demandLevel: 'Very High' },
+    { name: 'Tenali Fruit & Veg Market', district: 'Guntur, AP', distanceKm: 28, modalPricePerKg: cropBase * 1.04, transitCostPerKg: 1.2, trend: 'stable', arrivalVolume: 'Normal', demandLevel: 'Moderate' },
+    { name: 'Hyderabad Bowenpally', district: 'Hyderabad, TS', distanceKm: 275, modalPricePerKg: cropBase * 1.25, transitCostPerKg: 4.5, trend: 'up', arrivalVolume: 'High', demandLevel: 'High' },
+    { name: 'Ongole Agriculture Market', district: 'Prakasam, AP', distanceKm: 110, modalPricePerKg: cropBase * 0.96, transitCostPerKg: 2.6, trend: 'down', arrivalVolume: 'Heavy', demandLevel: 'Low' },
   ];
 
   const storageCostPerKgPerDay = 0.08;
@@ -372,7 +389,7 @@ export const ProfitAndSaleWindowView: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">{L('cropName')}</label>
-            <select value={selectedCrop} onChange={(e) => setSelectedCrop(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+            <select value={selectedCrop} onChange={(e) => handleCropChange(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-600 focus:outline-none">
               {cropOptions.map((crop) => <option key={crop} value={crop}>{getLocalizedCropName(crop, language)}</option>)}
             </select>
           </div>

@@ -15,12 +15,17 @@ import { dataStore } from '../services/dataStore.ts';
 
 const router = Router();
 
-// ================= AUTH ROUTES =================
+// ================= AUTH & PROFILE ROUTES =================
 router.post('/auth/send-otp', AuthController.sendOTP);
 router.post('/auth/verify-otp', AuthController.verifyOTP);
 router.post('/auth/demo-login', AuthController.demoLogin);
 router.get('/auth/me', requireAuth, AuthController.getMe);
 router.put('/auth/profile', requireAuth, AuthController.updateProfile);
+
+// ================= WALLET, DEPOSIT & WITHDRAWAL ROUTES =================
+router.get('/wallet/transactions', requireAuth, AuthController.getWalletTransactions);
+router.post('/wallet/deposit', requireAuth, AuthController.walletDeposit);
+router.post('/wallet/withdraw', requireAuth, AuthController.walletWithdraw);
 
 // ================= MARKET INTELLIGENCE ROUTES =================
 router.get('/markets/prices', MarketController.getPrices);
@@ -41,6 +46,7 @@ router.get('/products/:id/matching-requests', requireAuth, BuyerRequestControlle
 router.get('/buyer-requests', BuyerRequestController.getRequests);
 router.get('/buyer-requests/:id', BuyerRequestController.getRequestById);
 router.post('/buyer-requests', requireAuth, requireRole('buyer', 'admin'), BuyerRequestController.createRequest);
+router.delete('/buyer-requests/:id', requireAuth, BuyerRequestController.deleteRequest);
 router.get('/buyer-requests/:id/matching-farmers', requireAuth, BuyerRequestController.getMatchingFarmers);
 
 // ================= OFFERS & NEGOTIATIONS =================
@@ -55,6 +61,7 @@ router.get('/orders', requireAuth, OrderController.getOrders);
 router.get('/orders/:id', requireAuth, OrderController.getOrderById);
 router.post('/orders', requireAuth, OrderController.createOrder);
 router.patch('/orders/:id/status', requireAuth, OrderController.updateOrderStatus);
+router.delete('/orders/:id', requireAuth, OrderController.deleteOrder);
 router.post('/orders/:id/simulate-payment', requireAuth, OrderController.simulatePayment);
 router.post('/orders/:id/escrow', requireAuth, OrderController.updateEscrow);
 

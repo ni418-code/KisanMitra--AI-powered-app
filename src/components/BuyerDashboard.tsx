@@ -16,6 +16,8 @@ import {
   CheckCircle,
   Truck,
   FileText,
+  Wallet,
+  ArrowDownLeft,
 } from 'lucide-react';
 
 interface BuyerDashboardProps {
@@ -154,6 +156,45 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
           </p>
         </div>
 
+      </div>
+
+      {/* Buyer Escrow Wallet & Direct Deposit Card */}
+      <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-teal-900/60">
+        <div className="flex items-center space-x-3.5">
+          <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center font-black shrink-0 border border-white/20">
+            <Wallet className="w-6 h-6 text-teal-300" />
+          </div>
+          <div>
+            <span className="text-[10px] text-teal-300 uppercase font-black tracking-wider block">
+              KisanMitra Buyer Escrow Balance
+            </span>
+            <div className="flex items-baseline space-x-2">
+              <span className="text-xl sm:text-2xl font-black text-white">
+                ₹{(user?.walletBalance || 125000).toLocaleString('en-IN')}
+              </span>
+              <span className="text-xs text-teal-200">Available to Lock in Orders</span>
+            </div>
+            <p className="text-[11px] text-slate-300">
+              Locked in active transit orders: <span className="font-bold text-amber-300">₹{(user?.escrowLockedBalance || 61250).toLocaleString('en-IN')}</span> • Protected by RBI Compliant Nodal Escrow
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setCurrentTab('escrow')}
+            className="px-4 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-xs rounded-xl shadow-sm transition flex items-center space-x-1.5 cursor-pointer"
+          >
+            <ArrowDownLeft className="w-4 h-4" />
+            <span>Deposit to Escrow Wallet</span>
+          </button>
+          <button
+            onClick={() => setCurrentTab('profile')}
+            className="px-3 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition cursor-pointer"
+          >
+            Manage Banking
+          </button>
+        </div>
       </div>
 
       {/* Recommended Farmer Produce Lots */}

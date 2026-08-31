@@ -68,7 +68,7 @@ const CAROUSEL_SLIDES = [
 const LIVE_TICKER_ITEMS = [
   { crop: 'Tomato', mandi: 'Guntur, AP', price: '₹28/kg', modal: '₹2,800/qtl', change: '+8.2%' },
   { crop: 'Chilli', mandi: 'Tenali, AP', price: '₹190/kg', modal: '₹19,000/qtl', change: '+4.5%' },
-  { crop: 'Cotton', mandi: 'Warangal, TS', price: '₹72/kg', modal: '₹7,200/qtl', change: '+2.1%' },
+  { crop: 'Turmeric', mandi: 'Duggirala, AP', price: '₹135/kg', modal: '₹13,500/qtl', change: '+3.4%' },
   { crop: 'Paddy (Rice)', mandi: 'Nizamabad, TS', price: '₹23.5/kg', modal: '₹2,350/qtl', change: '+1.1%'},
 ];
 

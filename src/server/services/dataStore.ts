@@ -1,4 +1,4 @@
-import { User, Product, BuyerRequest, Offer, Order, Conversation, NotificationItem, PriceAlert, LogisticsTask } from '../../types/index.ts';
+import { User, Product, BuyerRequest, Offer, Order, Conversation, NotificationItem, PriceAlert, LogisticsTask, WalletTransaction } from '../../types/index.ts';
 
 // Pre-seeded authentic initial mock users for demo & seamless testing
 export const INITIAL_USERS: User[] = [
@@ -20,6 +20,19 @@ export const INITIAL_USERS: User[] = [
     isVerified: true,
     farmSizeAcres: 8.5,
     businessType: 'Organic & Commercial Farming',
+    walletBalance: 48500,
+    withdrawableBalance: 48500,
+    escrowLockedBalance: 32400,
+    bankDetails: {
+      accountHolderName: 'Ramesh Patel',
+      bankName: 'State Bank of India',
+      branchName: 'Pedakakani Branch, Guntur',
+      accountNumber: '30894726194',
+      ifscCode: 'SBIN0001248',
+      upiId: '9876543210@sbi',
+      accountType: 'savings',
+      isVerified: true,
+    },
     createdAt: '2026-08-01T00:00:00.000Z',
   },
   {
@@ -39,6 +52,19 @@ export const INITIAL_USERS: User[] = [
     preferredLanguage: 'en',
     isVerified: true,
     businessType: 'Wholesale Agri Distributor & Processing',
+    walletBalance: 125000,
+    withdrawableBalance: 0,
+    escrowLockedBalance: 61250,
+    bankDetails: {
+      accountHolderName: 'Rajesh Agro Foods Pvt Ltd',
+      bankName: 'HDFC Bank',
+      branchName: 'Begumpet Industrial Hub, Hyderabad',
+      accountNumber: '50200088921124',
+      ifscCode: 'HDFC0001428',
+      upiId: 'buyer.agro@okhdfcbank',
+      accountType: 'current',
+      isVerified: true,
+    },
     createdAt: '2026-08-05T00:00:00.000Z',
   },
   {
@@ -55,6 +81,18 @@ export const INITIAL_USERS: User[] = [
     },
     preferredLanguage: 'en',
     isVerified: true,
+    walletBalance: 500000,
+    withdrawableBalance: 500000,
+    escrowLockedBalance: 93650,
+    bankDetails: {
+      accountHolderName: 'Kisan Mitra Escrow Trustee',
+      bankName: 'Reserve Agri Bank of India',
+      accountNumber: '990011223344',
+      ifscCode: 'KMBA0001824',
+      upiId: 'kisanmitra.admin@icici',
+      accountType: 'current',
+      isVerified: true,
+    },
     createdAt: '2026-01-01T00:00:00.000Z',
   }
 ];
@@ -507,6 +545,12 @@ class DataStore {
     return undefined;
   }
 
+  deleteOrder(id: string): boolean {
+    const initialLen = this.orders.length;
+    this.orders = this.orders.filter((o) => o.id !== id && o.orderId !== id);
+    return this.orders.length < initialLen;
+  }
+
   // Conversations
   getConversations(userId: string): Conversation[] {
     return this.conversations.filter((c) => c.buyerId === userId || c.farmerId === userId);
@@ -590,6 +634,66 @@ class DataStore {
       return this.logisticsTasks[idx];
     }
     return undefined;
+  }
+
+  // Wallet & Banking Transactions
+  walletTransactions: WalletTransaction[] = [
+    {
+      id: 'tx-1',
+      userId: 'usr-1',
+      type: 'payout_received',
+      amount: 32400,
+      description: 'Escrow Settlement Released for Order #KM-ORD-1002 (Hybrid Shivam Tomato)',
+      method: 'bank_transfer',
+      status: 'completed',
+      referenceId: 'UTR998822104928',
+      createdAt: '2026-08-25T14:30:00.000Z',
+    },
+    {
+      id: 'tx-2',
+      userId: 'usr-1',
+      type: 'withdrawal',
+      amount: 15000,
+      description: 'Direct Instant Withdrawal to SBI Account (A/C: **6194)',
+      method: 'bank_transfer',
+      status: 'completed',
+      referenceId: 'IMPS2026082691823',
+      createdAt: '2026-08-26T11:15:00.000Z',
+    },
+    {
+      id: 'tx-3',
+      userId: 'usr-2',
+      type: 'deposit',
+      amount: 100000,
+      description: 'Wallet Escrow Pre-Funding via HDFC Net Banking',
+      method: 'netbanking',
+      status: 'completed',
+      referenceId: 'PG_HDFC_8849201948',
+      createdAt: '2026-08-24T09:00:00.000Z',
+    },
+    {
+      id: 'tx-4',
+      userId: 'usr-2',
+      type: 'escrow_hold',
+      amount: 61250,
+      description: 'Escrow Lock for Order #KM-ORD-1001 (Paddy BPT-5204)',
+      method: 'upi',
+      status: 'completed',
+      referenceId: 'ESCROW_LOCK_1001',
+      createdAt: '2026-08-26T10:05:00.000Z',
+    },
+  ];
+
+  getWalletTransactions(userId?: string): WalletTransaction[] {
+    if (!userId) return [...this.walletTransactions];
+    return this.walletTransactions
+      .filter((tx) => tx.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  addWalletTransaction(tx: WalletTransaction): WalletTransaction {
+    this.walletTransactions.unshift(tx);
+    return tx;
   }
 }
 

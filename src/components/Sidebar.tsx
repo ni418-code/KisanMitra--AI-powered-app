@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'msp_table' as AppView,
       label: t.mspTable,
       icon: Scale,
-      roles: ['farmer'],
+      roles: ['farmer', 'buyer'],
     },
     {
       id: isFarmer ? ('produce' as AppView) : ('buyer_requests' as AppView),
@@ -125,13 +125,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'logistics_storage' as AppView,
       label: `${t.logistics} & Storage`,
       icon: Truck,
-      roles: ['farmer'],
+      roles: ['farmer', 'buyer'],
     },
     {
       id: 'profit_calculator' as AppView,
       label: t.profitCalculator,
       icon: Calculator,
-      roles: ['farmer'],
+      roles: ['farmer', 'buyer'],
     },
     {
       id: 'chat' as AppView,

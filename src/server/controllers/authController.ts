@@ -175,7 +175,7 @@ export class AuthController {
   }
 
   /**
-   * Update Profile
+   * Update Profile & Bank Details
    */
   static async updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     if (!req.user) {
@@ -183,20 +183,208 @@ export class AuthController {
       return;
     }
 
-    const { name, location, preferredLanguage, farmSizeAcres, businessType } = req.body;
+    const {
+      name,
+      phone,
+      location,
+      preferredLanguage,
+      preferredCrops,
+      farmSizeAcres,
+      businessType,
+      bankDetails,
+    } = req.body;
+
+    const currentBank = req.user.bankDetails || {};
+    const updatedBank = bankDetails
+      ? {
+          accountHolderName: bankDetails.accountHolderName ?? currentBank.accountHolderName ?? req.user.name,
+          bankName: bankDetails.bankName ?? currentBank.bankName ?? 'State Bank of India',
+          branchName: bankDetails.branchName ?? currentBank.branchName ?? '',
+          accountNumber: bankDetails.accountNumber ?? currentBank.accountNumber ?? '',
+          ifscCode: (bankDetails.ifscCode ?? currentBank.ifscCode ?? '').toUpperCase(),
+          upiId: bankDetails.upiId ?? currentBank.upiId ?? '',
+          accountType: bankDetails.accountType ?? currentBank.accountType ?? 'savings',
+          isVerified: true,
+        }
+      : currentBank;
+
     const updated = dataStore.updateUser(req.user.id, {
       name: name || req.user.name,
-      location: location || req.user.location,
+      phone: phone || req.user.phone,
+      location: location ? { ...req.user.location, ...location } : req.user.location,
       preferredLanguage: preferredLanguage || req.user.preferredLanguage,
+      preferredCrops: preferredCrops || req.user.preferredCrops,
       farmSizeAcres: farmSizeAcres !== undefined ? farmSizeAcres : req.user.farmSizeAcres,
       businessType: businessType !== undefined ? businessType : req.user.businessType,
+      bankDetails: updatedBank,
     });
 
     res.json({
       success: true,
-      message: 'Profile updated successfully.',
+      message: 'Profile and bank account details updated successfully.',
       data: {
         user: updated,
+      },
+    });
+  }
+
+  /**
+   * Buyer / User Wallet Deposit (Simulated Payment)
+   */
+  static async walletDeposit(req: AuthenticatedRequest, res: Response): Promise<void> {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    const { amount, method = 'upi', referenceNote } = req.body;
+    const depositAmt = Number(amount);
+
+    if (isNaN(depositAmt) || depositAmt <= 0) {
+      res.status(400).json({ success: false, message: 'Please enter a valid deposit amount (min ₹1).' });
+      return;
+    }
+
+    const currentBal = req.user.walletBalance || 0;
+    const newBal = currentBal + depositAmt;
+
+    const updatedUser = dataStore.updateUser(req.user.id, {
+      walletBalance: newBal,
+    });
+
+    const txId = `tx-${Date.now()}`;
+    const refCode = `DEP_${method.toUpperCase()}_${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const tx = dataStore.addWalletTransaction({
+      id: txId,
+      userId: req.user.id,
+      type: 'deposit',
+      amount: depositAmt,
+      description: referenceNote || `Escrow Wallet Deposit via ${method.toUpperCase()}`,
+      method: method as any,
+      status: 'completed',
+      referenceId: refCode,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Notify user
+    dataStore.addNotification({
+      id: `notif-${Date.now()}`,
+      userId: req.user.id,
+      title: 'Funds Added to Escrow Wallet',
+      message: `₹${depositAmt.toLocaleString('en-IN')} successfully deposited into your KisanMitra Escrow Wallet. Ref: ${refCode}`,
+      type: 'system',
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+
+    res.json({
+      success: true,
+      message: `₹${depositAmt.toLocaleString('en-IN')} deposited successfully to your Escrow Wallet.`,
+      data: {
+        user: updatedUser,
+        transaction: tx,
+      },
+    });
+  }
+
+  /**
+   * Farmer / User Wallet Withdrawal to Bank / UPI
+   */
+  static async walletWithdraw(req: AuthenticatedRequest, res: Response): Promise<void> {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    const { amount, method = 'bank_transfer', payoutDetails } = req.body;
+    const withdrawAmt = Number(amount);
+
+    const availableWithdrawable = req.user.withdrawableBalance ?? req.user.walletBalance ?? 0;
+
+    if (isNaN(withdrawAmt) || withdrawAmt <= 0) {
+      res.status(400).json({ success: false, message: 'Please enter a valid withdrawal amount.' });
+      return;
+    }
+
+    if (withdrawAmt > availableWithdrawable) {
+      res.status(400).json({
+        success: false,
+        message: `Insufficient withdrawable balance. Available: ₹${availableWithdrawable.toLocaleString('en-IN')}`,
+      });
+      return;
+    }
+
+    const currentBal = req.user.walletBalance || 0;
+    const newWithdrawable = Math.max(0, availableWithdrawable - withdrawAmt);
+    const newWallet = Math.max(0, currentBal - withdrawAmt);
+
+    const updatedUser = dataStore.updateUser(req.user.id, {
+      walletBalance: newWallet,
+      withdrawableBalance: newWithdrawable,
+    });
+
+    const txId = `tx-${Date.now()}`;
+    const utr = `IMPS${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const bankInfo = req.user.bankDetails;
+    const destText = method === 'upi'
+      ? `UPI ID ${payoutDetails?.upiId || bankInfo?.upiId || req.user.phone + '@upi'}`
+      : `${bankInfo?.bankName || 'Bank'} A/C: ••••${(bankInfo?.accountNumber || '6194').slice(-4)} (IFSC: ${bankInfo?.ifscCode || 'SBIN0001248'})`;
+
+    const tx = dataStore.addWalletTransaction({
+      id: txId,
+      userId: req.user.id,
+      type: 'withdrawal',
+      amount: withdrawAmt,
+      description: `Instant Payout to ${destText}`,
+      method: method as any,
+      status: 'completed',
+      referenceId: utr,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Notify farmer
+    dataStore.addNotification({
+      id: `notif-${Date.now()}`,
+      userId: req.user.id,
+      title: 'Withdrawal Processed Successfully',
+      message: `₹${withdrawAmt.toLocaleString('en-IN')} has been sent to your ${destText}. UTR: ${utr}`,
+      type: 'system',
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+
+    res.json({
+      success: true,
+      message: `₹${withdrawAmt.toLocaleString('en-IN')} withdrawn successfully. Funds transferred via instant IMPS/UPI. UTR: ${utr}`,
+      data: {
+        user: updatedUser,
+        transaction: tx,
+        utr,
+      },
+    });
+  }
+
+  /**
+   * Get User Wallet & Escrow Transactions
+   */
+  static async getWalletTransactions(req: AuthenticatedRequest, res: Response): Promise<void> {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    const transactions = dataStore.getWalletTransactions(req.user.id);
+
+    res.json({
+      success: true,
+      data: {
+        transactions,
+        total: transactions.length,
+        walletBalance: req.user.walletBalance || 0,
+        withdrawableBalance: req.user.withdrawableBalance ?? req.user.walletBalance ?? 0,
+        escrowLockedBalance: req.user.escrowLockedBalance || 0,
       },
     });
   }

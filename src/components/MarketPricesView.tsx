@@ -186,7 +186,7 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
                 <option value="Chilli Red">Chilli Red (₹180 - ₹210/kg)</option>
                 <option value="Onion">Onion (₹22 - ₹30/kg)</option>
                 <option value="Paddy (Dhan)">Paddy / Rice (₹23 - ₹28/kg)</option>
-                <option value="Cotton">Cotton (₹68 - ₹76/kg)</option>
+                <option value="Turmeric">Turmeric (₹120 - ₹145/kg)</option>
               </select>
             </div>
 
@@ -270,7 +270,7 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search crop name (e.g. Tomato, Chilli, Cotton, Onion, Paddy)..."
+              placeholder="Search crop name (e.g. Tomato, Onion, Paddy, Chilli, Maize)..."
               className="w-full pl-10 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             />
           </div>
@@ -352,15 +352,9 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
               Live data.gov.in Feed
             </span>
           </div>
-          {isFarmer ? (
-            <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-              Click any crop for 30-day interactive price trend chart
-            </span>
-          ) : (
-            <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-              Official current market rates for transparent procurement
-            </span>
-          )}
+          <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+            Official current market rates for transparent APMC procurement
+          </span>
         </div>
 
         {loading ? (
@@ -383,23 +377,16 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
                   <th className="py-3 px-4">Min - Max Price</th>
                   <th className="py-3 px-4">Modal Price (₹/qtl)</th>
                   <th className="py-3 px-4">Rate (₹/kg)</th>
-                  {isFarmer && <th className="py-3 px-4 text-right">Action</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {prices.map((price) => (
                   <tr
                     key={price.id}
-                    onClick={() => isFarmer && openCropDetailModal(price.cropName)}
-                    className={`hover:bg-emerald-50/50 transition ${isFarmer ? 'cursor-pointer' : ''}`}
+                    className="hover:bg-slate-50/80 transition"
                   >
                     <td className="py-3.5 px-4 font-extrabold text-slate-900">
-                      <div className="flex items-center space-x-2">
-                        <span>{price.cropName}</span>
-                        <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-normal rounded">
-                          {price.variety || 'Local'}
-                        </span>
-                      </div>
+                      {price.cropName}
                     </td>
 
                     <td className="py-3.5 px-4 text-slate-700">
@@ -423,21 +410,6 @@ export const MarketPricesView: React.FC<MarketPricesViewProps> = ({ openCropDeta
                     <td className="py-3.5 px-4 font-black text-slate-900">
                       ₹{price.pricePerKg}/kg
                     </td>
-
-                    {isFarmer && (
-                      <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openCropDetailModal(price.cropName);
-                          }}
-                          className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold text-[11px] rounded-lg transition inline-flex items-center space-x-1"
-                        >
-                          <span>Trends</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>

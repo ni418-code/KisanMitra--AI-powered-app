@@ -10,6 +10,30 @@ export interface LocationInfo {
   longitude?: number;
 }
 
+export interface BankDetails {
+  accountHolderName?: string;
+  accountNumber?: string;
+  confirmAccountNumber?: string;
+  ifscCode?: string;
+  bankName?: string;
+  branchName?: string;
+  upiId?: string;
+  accountType?: 'savings' | 'current';
+  isVerified?: boolean;
+}
+
+export interface WalletTransaction {
+  id: string;
+  userId: string;
+  type: 'deposit' | 'withdrawal' | 'escrow_hold' | 'escrow_release' | 'payout_received';
+  amount: number;
+  description: string;
+  method: 'upi' | 'netbanking' | 'neft' | 'card' | 'bank_transfer';
+  status: 'completed' | 'pending' | 'processing';
+  referenceId?: string;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   userId: string; // e.g. KM-F-000001 or KM-B-000001
@@ -23,6 +47,10 @@ export interface User {
   isVerified: boolean;
   farmSizeAcres?: number;
   businessType?: string;
+  bankDetails?: BankDetails;
+  walletBalance?: number;
+  withdrawableBalance?: number;
+  escrowLockedBalance?: number;
   createdAt: string;
   updatedAt?: string;
 }

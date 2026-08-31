@@ -112,7 +112,7 @@ export const PriceAlertsView: React.FC = () => {
                 <option value="Chilli Red">Chilli Red</option>
                 <option value="Onion">Onion</option>
                 <option value="Paddy (Dhan)">Paddy / Rice</option>
-                <option value="Cotton">Cotton</option>
+                <option value="Maize">Maize</option>
                 <option value="Turmeric">Turmeric</option>
               </select>
             </div>

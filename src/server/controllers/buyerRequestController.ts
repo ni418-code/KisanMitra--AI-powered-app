@@ -174,4 +174,37 @@ export class BuyerRequestController {
       },
     });
   }
+
+  /**
+   * Delete a buyer requirement
+   */
+  static async deleteRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    const request = dataStore.getBuyerRequestById(req.params.id);
+    if (!request) {
+      res.status(404).json({ success: false, message: 'Buyer requirement not found.' });
+      return;
+    }
+
+    // Role check: Only the buyer who posted or admin can delete
+    if (request.buyerId !== req.user.id && req.user.role !== 'admin') {
+      res.status(403).json({ success: false, message: 'You can only delete your own requirement posts.' });
+      return;
+    }
+
+    const deleted = dataStore.deleteBuyerRequest(req.params.id);
+    if (!deleted) {
+      res.status(500).json({ success: false, message: 'Failed to delete buyer requirement.' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: 'Buyer requirement deleted successfully.',
+    });
+  }
 }

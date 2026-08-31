@@ -1,4 +1,4 @@
-import { User, MarketPrice, MSPData, Product, BuyerRequest, MatchResult, Offer, Order, Conversation, NotificationItem, PriceAlert } from '../types/index.ts';
+import { User, MarketPrice, MSPData, Product, BuyerRequest, MatchResult, Offer, Order, Conversation, NotificationItem, PriceAlert, WalletTransaction } from '../types/index.ts';
 
 // Same-origin by default (Render web deploy). For the Capacitor Android APK, set
 // VITE_API_BASE_URL to the deployed backend URL so the app can reach the API.
@@ -75,6 +75,28 @@ export const api = {
     request<{ user: User }>('/auth/profile', {
       method: 'PUT',
       body: JSON.stringify(updates),
+    }),
+
+  // Wallet & Banking
+  getWalletTransactions: () =>
+    request<{
+      transactions: WalletTransaction[];
+      total: number;
+      walletBalance: number;
+      withdrawableBalance: number;
+      escrowLockedBalance: number;
+    }>('/wallet/transactions'),
+
+  depositWallet: (amount: number, method: string, referenceNote?: string) =>
+    request<{ user: User; transaction: WalletTransaction }>('/wallet/deposit', {
+      method: 'POST',
+      body: JSON.stringify({ amount, method, referenceNote }),
+    }),
+
+  withdrawWallet: (amount: number, method: string, payoutDetails?: any) =>
+    request<{ user: User; transaction: WalletTransaction; utr: string }>('/wallet/withdraw', {
+      method: 'POST',
+      body: JSON.stringify({ amount, method, payoutDetails }),
     }),
 
   // Market Prices & Trends
@@ -161,6 +183,11 @@ export const api = {
       body: JSON.stringify(requestData),
     }),
 
+  deleteBuyerRequest: (id: string) =>
+    request<any>(`/buyer-requests/${id}`, {
+      method: 'DELETE',
+    }),
+
   getBuyerRequestMatches: (id: string) =>
     request<{ request: BuyerRequest; matches: MatchResult[]; totalMatches: number }>(`/buyer-requests/${id}/matching-farmers`),
 
@@ -205,6 +232,11 @@ export const api = {
     request<{ order: Order }>(`/orders/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
+    }),
+
+  deleteOrder: (id: string) =>
+    request<any>(`/orders/${id}`, {
+      method: 'DELETE',
     }),
 
   simulatePayment: (id: string, action: 'deposit' | 'release') =>

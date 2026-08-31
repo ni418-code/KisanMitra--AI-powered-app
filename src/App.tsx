@@ -332,6 +332,7 @@ const MainApp: React.FC = () => {
                 <EscrowManagementView
                   openChatModal={handleOpenChatModal}
                   initialOrderId={escrowInitialOrderId}
+                  onNavigateToProfile={() => navigateTo('profile')}
                 />
               )}
 

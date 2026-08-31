@@ -82,7 +82,7 @@ export const MSPComparisonView: React.FC = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search crop (e.g. Paddy, Cotton, Wheat)..."
+            placeholder="Search crop (e.g. Paddy, Wheat, Maize, Moong)..."
             className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
           />
         </div>
@@ -139,7 +139,7 @@ export const MSPComparisonView: React.FC = () => {
                 {mspList.map((item) => (
                   <tr key={item.id} className="hover:bg-emerald-50/40 transition">
                     <td className="py-3.5 px-4 font-black text-slate-900">
-                      {item.cropName}
+                      {item.cropName || item.crop}
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 font-medium">
                       {item.variety || 'Common / FAQ'}
@@ -154,13 +154,13 @@ export const MSPComparisonView: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 font-black text-emerald-800 text-sm">
-                      ₹{(item.mspRate || 0).toLocaleString('en-IN')}
+                      ₹{(item.mspValue || item.mspRate || 0).toLocaleString('en-IN')}
                     </td>
                     <td className="py-3.5 px-4 font-black text-slate-900">
-                      ₹{item.mspRatePerKg || Math.round((item.mspRate || 0) / 100)}/kg
+                      ₹{item.mspPerKg || item.mspRatePerKg || Math.round((item.mspValue || item.mspRate || 0) / 100)}/kg
                     </td>
                     <td className="py-3.5 px-4 text-slate-600">
-                      ₹{(item.costOfProduction || Math.round((item.mspRate || 0) * 0.65)).toLocaleString('en-IN')}/qtl
+                      ₹{(item.costOfProduction || Math.round((item.mspValue || item.mspRate || 0) * 0.65)).toLocaleString('en-IN')}/qtl
                     </td>
                     <td className="py-3.5 px-4 font-bold text-emerald-700">
                       {item.returnOverCostPercentage || 50}%

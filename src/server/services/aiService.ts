@@ -49,8 +49,8 @@ export class AIService {
     ).join('\n');
 
     const languageInstructionMap: Record<string, string> = {
-      te: 'CRITICAL LANGUAGE DIRECTIVE: You MUST write your response 100% in TELUGU script (తెలుగులో మాత్రమే సమాధానం ఇవ్వండి). Convert all concepts, crop names, explanations, and advice into Telugu words. Do NOT use English sentences.',
-      hi: 'CRITICAL LANGUAGE DIRECTIVE: You MUST write your response 100% in HINDI (देवनागरी लिपि में ही उत्तर दें). Convert all concepts, crop names, explanations, and advice into Hindi words. Do NOT use English sentences.',
+      te: 'CRITICAL LANGUAGE DIRECTIVE: You MUST write your response 100% in TELUGU script (తెలుగులో మాత్రమే సమాధానం ఇవ్వండి). Convert all concepts, crop names, explanations, and advice into Telugu words. Do NOT use English sentences even if the user typed in English.',
+      hi: 'CRITICAL LANGUAGE DIRECTIVE: You MUST write your response 100% in HINDI (देवनागरी लिपि में ही उत्तर दें). Convert all concepts, crop names, explanations, and advice into Hindi words. Do NOT use English sentences even if the user typed in English.',
       ta: 'CRITICAL LANGUAGE DIRECTIVE: You MUST write your response 100% in TAMIL script (தமிழில் மட்டுமே பதிலளிக்கவும்). Convert all concepts into Tamil.',
       kn: 'CRITICAL LANGUAGE DIRECTIVE: You MUST write your response 100% in KANNADA script (ಕನ್ನಡದಲ್ಲಿ ಮಾತ್ರ ಉತ್ತರಿಸಿ). Convert all concepts into Kannada.',
       ml: 'CRITICAL LANGUAGE DIRECTIVE: You MUST write your response 100% in MALAYALAM script (മലയാളത്തിൽ മാത്രം മറുപടി നൽകുക).',
@@ -69,6 +69,7 @@ CRITICAL OPERATIONAL RULES:
 3. Clearly distinguish between "Official Government MSP" (guaranteed support price) vs "Mandi Wholesale Price" vs "Direct Buyer Offer".
 4. When discussing where to sell, emphasize Net Return (Wholesale Price minus Transport & Handling costs).
 5. Keep recommendations actionable, practical, friendly, and concise.
+6. Even if the user query is typed in English or Latin alphabet, ALWAYS respond in the user's selected language: ${language}.
 
 LIVE KISAN MITRA MARKET DATABASE (Source: AGMARKNET / data.gov.in):
 ${topPrices}
@@ -127,7 +128,7 @@ USER CONTEXT:
               return {
                 reply: response.text,
                 sources: ['Government AGMARKNET (data.gov.in)', 'Ministry of Agriculture & Farmers Welfare, GoI', 'KisanMitra Verified Buyers'],
-                relatedCrops: ['Tomato', 'Chilli', 'Paddy (Rice)', 'Cotton', 'Onion'],
+                relatedCrops: ['Tomato', 'Chilli', 'Paddy (Rice)', 'Maize', 'Onion'],
               };
             }
           } finally {
@@ -150,7 +151,7 @@ USER CONTEXT:
     // High-accuracy, instant grounded knowledge engine
     const q = message.toLowerCase().trim();
     let fallbackReply = '';
-    const relatedCrops = ['Tomato', 'Chilli', 'Paddy (Rice)', 'Cotton', 'Onion'];
+    const relatedCrops = ['Tomato', 'Chilli', 'Paddy (Rice)', 'Maize', 'Onion'];
 
     // 1. Tomato Price Inquiry
     if (q.includes('tomato') || q.includes('టమాటా') || q.includes('టమోటా') || q.includes('टमाटर')) {
@@ -215,11 +216,11 @@ USER CONTEXT:
     // 7. Official MSP benchmarks
     else if (q.includes('msp') || q.includes('మద్దతు') || q.includes('समर्थन') || q.includes('support price')) {
       if (language === 'te') {
-        fallbackReply = '2024-25 ఖరీఫ్ & రబీ అధికారిక ప్రభుత్వ కనీస మద్దతు ధరలు (MSP): వరి (కామన్): ₹2,300/క్వింటాల్ (కేజీ ₹23), పత్తి (మధ్యస్థ): ₹7,121/క్వింటాల్, మొక్కజొన్న: ₹2,225/క్వింటాల్, సోయాబీన్: ₹4,892/క్వింటాల్, కందులు (తుర్): ₹7,550/క్వింటాల్, వేరుశనగ: ₹6,783/క్వింటాల్. మార్కెట్ ధరలు ఈ మద్దతు ధర కంటే తక్కువగా ఉంటే ప్రభుత్వ కొనుగోలు కేంద్రాలకు (PPC) లేదా కిసాన్ మిత్రలోని గ్యారెంటీ కొనుగోలుదారులకు అమ్మండి.';
+        fallbackReply = '2024-25 ఖరీఫ్ & రబీ అధికారిక ప్రభుత్వ కనీస మద్దతు ధరలు (MSP): వరి (కామన్): ₹2,300/క్వింటాల్ (కేజీ ₹23), పసుపు: ₹8,000/క్వింటాల్, మొక్కజొన్న: ₹2,225/క్వింటాల్, సోయాబీన్: ₹4,892/క్వింటాల్, కందులు (తుర్): ₹7,550/క్వింటాల్, వేరుశనగ: ₹6,783/క్వింటాల్. మార్కెట్ ధరలు ఈ మద్దతు ధర కంటే తక్కువగా ఉంటే ప్రభుత్వ కొనుగోలు కేంద్రాలకు (PPC) లేదా కిసాన్ మిత్రలోని గ్యారెంటీ కొనుగోలుదారులకు అమ్మండి.';
       } else if (language === 'hi') {
-        fallbackReply = 'वर्ष 2024-25 के लिए आधिकारिक न्यूनतम समर्थन मूल्य (MSP): धान (सामान्य): ₹2,300/क्विंटल, कपास: ₹7,121/क्विंटल, मक्का: ₹2,225/क्विंटल, सोयाबीन: ₹4,892/क्विंटल, अरहर (तूर): ₹7,550/क्विंटल, मूंगफली: ₹6,783/क्विंटल। मंडी भाव एमएसपी से नीचे जाने पर सरकारी खरीद केंद्रों (PPC) का रुख करें।';
+        fallbackReply = 'वर्ष 2024-25 के लिए आधिकारिक न्यूनतम समर्थन मूल्य (MSP): धान (सामान्य): ₹2,300/क्विंटल, हल्दी: ₹8,000/क्विंटल, मक्का: ₹2,225/क्विंटल, सोयाबीन: ₹4,892/क्विंटल, अरहर (तूर): ₹7,550/क्विंटल, मूंगफली: ₹6,783/क्विंटल। मंडी भाव एमएसपी से नीचे जाने पर सरकारी खरीद केंद्रों (PPC) का रुख करें।';
       } else {
-        fallbackReply = 'Official 2024-25 Government MSP Benchmarks (GoI): Paddy (Common): ₹2,300/Quintal (₹23/kg), Cotton (Medium): ₹7,121/Quintal, Maize: ₹2,225/Quintal, Soybean: ₹4,892/Quintal, Tur/Arhar: ₹7,550/Quintal, Groundnut: ₹6,783/Quintal. If wholesale mandi rates dip below MSP, utilize direct procurement or verified institutional buyers on KisanMitra.';
+        fallbackReply = 'Official 2024-25 Government MSP Benchmarks (GoI): Paddy (Common): ₹2,300/Quintal (₹23/kg), Turmeric: ₹8,000/Quintal, Maize: ₹2,225/Quintal, Soybean: ₹4,892/Quintal, Tur/Arhar: ₹7,550/Quintal, Groundnut: ₹6,783/Quintal. If wholesale mandi rates dip below MSP, utilize direct procurement or verified institutional buyers on KisanMitra.';
       }
     }
     // 8. Chilli Price Inquiry
@@ -235,7 +236,7 @@ USER CONTEXT:
     // 9. Default greeting / general assistance
     else {
       if (language === 'te') {
-        fallbackReply = 'నమస్కారం! నేను మీ కిసాన్ మిత్ర సహాయకుడిని. మీరు నన్ను లైవ్ AGMARKNET మార్కెట్ ధరలు, అధికారిక MSP వివరాలు, టమాటా/మిరప/పత్తి పంటల కొనుగోలుదారులు, రవాణా చార్జీలు లేదా సురక్షిత ఎస్క్రో పేమెంట్ల గురించి ఏ భాషలోనైనా అడగవచ్చు.';
+        fallbackReply = 'నమస్కారం! నేను మీ కిసాన్ మిత్ర సహాయకుడిని. మీరు నన్ను లైవ్ AGMARKNET మార్కెట్ ధరలు, అధికారిక MSP వివరాలు, టమాటా/మిరప/వరి పంటల కొనుగోలుదారులు, రవాణా చార్జీలు లేదా సురక్షిత ఎస్క్రో పేమెంట్ల గురించి ఏ భాషలోనైనా అడగవచ్చు.';
       } else if (language === 'hi') {
         fallbackReply = 'नमस्ते किसान मित्र! मैं आपका कृषि बाजार सहायक हूँ। आप मुझसे वर्तमान मंडी भाव, आधिकारिक एमएसपी (MSP), अपनी फसलों के लिए खरीदार, परिवहन दरें या एस्क्रो भुगतान के बारे में कुछ भी पूछ सकते हैं।';
       } else {

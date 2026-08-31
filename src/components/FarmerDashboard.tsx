@@ -152,7 +152,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
             <span className="text-xs text-slate-500 font-semibold">active buyers</span>
           </div>
           <p className="text-[11px] text-blue-700 font-medium mt-1">
-            Seeking Tomato, Chilli, Cotton
+            Seeking Tomato, Chilli, Turmeric
           </p>
         </div>
 
@@ -174,6 +174,45 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           </p>
         </div>
 
+      </div>
+
+      {/* Farmer Withdrawable Earnings & Bank Account Settlement Card */}
+      <div className="bg-gradient-to-r from-emerald-900 to-teal-950 rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-emerald-800/60">
+        <div className="flex items-center space-x-3.5">
+          <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center font-black shrink-0 border border-white/20">
+            <Wallet className="w-6 h-6 text-emerald-300" />
+          </div>
+          <div>
+            <span className="text-[10px] text-emerald-300 uppercase font-black tracking-wider block">
+              Farmer Clearing & Payout Account
+            </span>
+            <div className="flex items-baseline space-x-2">
+              <span className="text-xl sm:text-2xl font-black text-white">
+                ₹{((user?.withdrawableBalance ?? user?.walletBalance) || 48500).toLocaleString('en-IN')}
+              </span>
+              <span className="text-xs text-emerald-200">Withdrawable Balance</span>
+            </div>
+            <p className="text-[11px] text-slate-300">
+              Linked Bank: <span className="font-bold text-white">{user?.bankDetails?.bankName || 'SBI'}</span> (A/C: ••••{(user?.bankDetails?.accountNumber || '6194').slice(-4)}) • <span className="font-mono text-emerald-300">{user?.bankDetails?.ifscCode || 'SBIN0001248'}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setCurrentTab('escrow')}
+            className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xs rounded-xl shadow-sm transition flex items-center space-x-1.5 cursor-pointer"
+          >
+            <ArrowUpRight className="w-4 h-4" />
+            <span>Withdraw to Bank</span>
+          </button>
+          <button
+            onClick={() => setCurrentTab('profile')}
+            className="px-3 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition cursor-pointer"
+          >
+            Update Bank Details
+          </button>
+        </div>
       </div>
 
       {/* Exact Backend Lot Images & Prices */}
@@ -274,7 +313,6 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                   <th className="py-2.5 px-3">Modal Price</th>
                   <th className="py-2.5 px-3">Rate (₹/kg)</th>
                   <th className="py-2.5 px-3">Trend</th>
-                  <th className="py-2.5 px-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -282,7 +320,6 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                   <tr key={price.id} className="hover:bg-slate-50/80 transition">
                     <td className="py-3 px-3 font-bold text-slate-900">
                       {getLocalizedCropName(price.cropName, language)}
-                      <span className="block text-[10px] font-normal text-slate-400">{price.variety || 'Standard'}</span>
                     </td>
                     <td className="py-3 px-3 text-slate-600">
                       {price.market}
@@ -299,14 +336,6 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                       <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
                         Stable
                       </span>
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <button
-                        onClick={() => openCropDetailModal(price.cropName)}
-                        className="text-xs text-emerald-700 hover:text-emerald-900 font-bold"
-                      >
-                        Trends →
-                      </button>
                     </td>
                   </tr>
                 ))}

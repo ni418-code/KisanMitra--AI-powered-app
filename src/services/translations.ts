@@ -767,15 +767,6 @@ export const CROP_LOCALIZED_NAMES: Record<string, Record<LanguageCode, string>> 
     ml: 'പച്ചമുളക്',
     mr: 'हिरवी मिरची',
   },
-  'Cotton': {
-    en: 'Cotton (Kapas)',
-    te: 'పత్తి (Cotton)',
-    hi: 'कपास (Cotton)',
-    ta: 'பருத்தி (Cotton)',
-    kn: 'ಹತ್ತಿ (Cotton)',
-    ml: 'പരുത്തി (Cotton)',
-    mr: 'कापूस (Cotton)',
-  },
   'Paddy': {
     en: 'Paddy / Rice',
     te: 'వరి / ధాన్యం (Paddy)',
@@ -793,15 +784,6 @@ export const CROP_LOCALIZED_NAMES: Record<string, Record<LanguageCode, string>> 
     kn: 'ಭತ್ತ (Paddy)',
     ml: 'നെല്ല് (Paddy)',
     mr: 'भात (Paddy)',
-  },
-  'Turmeric': {
-    en: 'Turmeric (Haldi)',
-    te: 'పసుపు (Turmeric)',
-    hi: 'हल्दी (Turmeric)',
-    ta: 'மஞ்சள் (Turmeric)',
-    kn: 'ಅರಿಶಿನ (Turmeric)',
-    ml: 'മഞ്ഞൾ (Turmeric)',
-    mr: 'हळद (Turmeric)',
   },
   'Maize': {
     en: 'Maize / Corn',

@@ -122,22 +122,22 @@ export const SmartMatchingView: React.FC<SmartMatchingViewProps> = ({
     },
     {
       id: 'M-104',
-      partyName: isFarmer ? 'Nandi Cotton Ginning Mills' : 'Anil Kumar (Cotton Producer)',
+      partyName: isFarmer ? 'Nandi Turmeric Processing Hub' : 'Anil Kumar (Turmeric Producer)',
       partyType: isFarmer ? 'buyer' : 'farmer',
-      location: 'Warangal, TS',
-      distanceKm: 140,
-      crop: 'Cotton',
+      location: 'Duggirala, AP',
+      distanceKm: 28,
+      crop: 'Turmeric',
       quantity: '3,000 kg',
-      expectedPrice: 74.0,
-      marketModalPrice: 72.0,
-      matchScore: 88,
-      gradeRequired: 'Long Staple 29mm',
+      expectedPrice: 138.0,
+      marketModalPrice: 135.0,
+      matchScore: 92,
+      gradeRequired: 'Curcumin > 4.5% Finger Grade',
       factors: {
-        priceCompatibility: 86,
+        priceCompatibility: 94,
         varietyMatch: 95,
-        distanceConvenience: 78,
+        distanceConvenience: 92,
         volumeFit: 96,
-        trustScore: 92,
+        trustScore: 95,
       },
       kycVerified: true,
     },
@@ -192,7 +192,7 @@ export const SmartMatchingView: React.FC<SmartMatchingViewProps> = ({
             <option value="all" className="bg-slate-900 text-white">All Crops</option>
             <option value="Tomato" className="bg-slate-900 text-white">Tomato</option>
             <option value="Chilli" className="bg-slate-900 text-white">Chilli</option>
-            <option value="Cotton" className="bg-slate-900 text-white">Cotton</option>
+            <option value="Turmeric" className="bg-slate-900 text-white">Turmeric</option>
           </select>
         </div>
       </div>
