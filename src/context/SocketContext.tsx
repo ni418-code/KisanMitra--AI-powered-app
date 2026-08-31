@@ -18,8 +18,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user } = useAuth();
 
   useEffect(() => {
-    // Connect to same host
-    const newSocket = io({
+    // Connect to same host by default. When VITE_API_BASE_URL is set (e.g. for the
+    // Android APK), connect to that backend so real-time chat/notifications work.
+    const apiBase = (import.meta.env.VITE_API_BASE_URL as string) || undefined;
+    const newSocket = io(apiBase, {
       transports: ['websocket', 'polling'],
     });
 

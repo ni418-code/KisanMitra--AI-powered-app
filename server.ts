@@ -26,7 +26,8 @@ const io = new SocketIOServer(httpServer, {
   },
 });
 
-const PORT = 3000;
+// Render injects a dynamic PORT env var; fall back to 3000 for local dev.
+const PORT = Number(process.env.PORT) || 3000;
 
 // Security & Parsing Middlewares
 app.use(cors({ origin: '*' }));

@@ -2,13 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Kisan Mitra - Connecting Farmers, Buyers and Markets</title>
     <meta name="description" content="Connecting Farmers, Buyers and Markets with real-time market intelligence, MSP data, crop listings, buyer requirements, matching engine, negotiation orders, real-time chat, price alerts, and multilingual AI assistant." />
     <meta property="og:title" content="Kisan Mitra - Agri Marketplace" />
     <meta property="og:description" content="Real-time AGMARKNET intelligence, MSP benchmarking, produce listings, buyer matching, negotiation, orders, escrow and AI assistant." />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/og-image.jpg" />
+
+    <!-- PWA / Mobile App -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#047857" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="KisanMitra" />
+    <meta name="application-name" content="Kisan Mitra" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -16,6 +34,20 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Register the PWA service worker (only in secure contexts: https or localhost)
+      if ('serviceWorker' in navigator && (window.isSecureContext)) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').then(
+            function (reg) {
+              console.log('[PWA] Service worker registered, scope:', reg.scope);
+            },
+            function (err) {
+              console.warn('[PWA] Service worker registration failed:', err);
+            }
+          );
+        });
+      }
+    </script>
   </body>
 </html>
-

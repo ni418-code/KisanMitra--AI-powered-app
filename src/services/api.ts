@@ -1,6 +1,8 @@
 import { User, MarketPrice, MSPData, Product, BuyerRequest, MatchResult, Offer, Order, Conversation, NotificationItem, PriceAlert } from '../types/index.ts';
 
-const BASE_URL = '/api';
+// Same-origin by default (Render web deploy). For the Capacitor Android APK, set
+// VITE_API_BASE_URL to the deployed backend URL so the app can reach the API.
+const BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string) || '/api').replace(/\/+$/, '');
 
 function getAuthToken(): string | null {
   return localStorage.getItem('km_auth_token');
