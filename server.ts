@@ -113,7 +113,13 @@ async function start() {
   if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'] },
+      server: {
+        middlewareMode: true,
+        // Reuse the HTTP server so Vite's HMR WebSocket is upgraded by the
+        // same listener that serves the middleware in the preview environment.
+        hmr: { server: httpServer },
+        allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'],
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
